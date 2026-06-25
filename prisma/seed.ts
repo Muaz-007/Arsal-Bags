@@ -1,0 +1,92 @@
+/**
+ * Prisma seed script.
+ *
+ * Run with: `npm run db:seed` once DATABASE_URL is set.
+ * This script idempotently upserts the mock catalogue + a seeded admin user
+ * (credentials come from ADMIN_EMAIL / ADMIN_PASSWORD env vars).
+ */
+
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { PRODUCTS, COUPONS, USERS } from "../lib/mock-data";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@bagsart.dev";
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      name: "BagsArt Admin",
+      email: adminEmail,
+      passwordHash,
+      role: "admin",
+    },
+  });
+
+  // Seed additional sample customer accounts (passwords default to "password")
+  for (const u of USERS.filter((x) => x.role !== "admin")) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        name: u.name,
+        email: u.email,
+        passwordHash: await bcrypt.hash("password", 10),
+        role: "customer",
+      },
+    });
+  }
+
+  for (const p of PRODUCTS) {
+    await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: {},
+      create: {
+        slug: p.slug,
+        name: p.name,
+        tagline: p.tagline,
+        description: p.description,
+        price: p.price,
+        compareAt: p.compareAt,
+        currency: p.currency,
+        category: p.category,
+        collection: p.collection,
+        colors: p.colors,
+        materials: p.materials,
+        images: p.images,
+        stock: p.stock,
+        featured: !!p.featured,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+      },
+    });
+  }
+
+  for (const c of COUPONS) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: {},
+      create: {
+        code: c.code,
+        type: c.type,
+        value: c.value,
+        active: c.active,
+        uses: c.uses,
+      },
+    });
+  }
+
+  console.log("✔  Seed complete");
+}
+
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

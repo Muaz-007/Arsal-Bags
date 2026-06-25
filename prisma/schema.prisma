@@ -1,0 +1,179 @@
+// BagsArt Prisma schema — MySQL
+// Run `npx prisma generate` after install, and `npx prisma db push` (or
+// `npx prisma migrate dev`) when DATABASE_URL is configured.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  customer
+  admin
+}
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  shipped
+  delivered
+  cancelled
+}
+
+enum CouponType {
+  percent
+  fixed
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(customer)
+
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  reviews       Review[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// NextAuth adapter tables ------------------------------------------------------
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Catalogue -------------------------------------------------------------------
+model Product {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  tagline     String
+  description String    @db.Text
+  price       Decimal   @db.Decimal(10, 2)
+  compareAt   Decimal?  @db.Decimal(10, 2)
+  currency    String    @default("USD")
+  category    String
+  collection  String?
+  colors      Json
+  materials   Json
+  images      Json
+  stock       Int       @default(0)
+  featured    Boolean   @default(false)
+  rating      Float     @default(0)
+  reviewCount Int       @default(0)
+
+  reviews     Review[]
+  orderItems  OrderItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([collection])
+  @@index([featured])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  author    String
+  rating    Int
+  title     String
+  body      String   @db.Text
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String?
+  customerName   String
+  customerEmail  String
+  subtotal       Decimal     @db.Decimal(10, 2)
+  shipping       Decimal     @db.Decimal(10, 2) @default(0)
+  tax            Decimal     @db.Decimal(10, 2) @default(0)
+  total          Decimal     @db.Decimal(10, 2)
+  status         OrderStatus @default(pending)
+  paymentRef     String?
+
+  user           User?       @relation(fields: [userId], references: [id])
+  items          OrderItem[]
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  name      String
+  image     String
+  color     String?
+  price     Decimal  @db.Decimal(10, 2)
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Coupon {
+  code      String     @id
+  type      CouponType
+  value     Decimal    @db.Decimal(10, 2)
+  active    Boolean    @default(true)
+  expiresAt DateTime?
+  uses      Int        @default(0)
+
+  createdAt DateTime   @default(now())
+}
