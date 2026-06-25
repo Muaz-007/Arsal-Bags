@@ -1,6 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+/**
+ * Edge middleware — gates `/dashboard/*` (any signed-in user) and
+ * `/admin/*` (admin role only). Anything else passes through.
+ *
+ * The redirect for unauthenticated users preserves the original path in
+ * a `from` query param so /auth/login can bounce them back after success.
+ *
+ * IMPORTANT: middleware runs on the edge and CANNOT import lib/auth.ts —
+ * we read NEXTAUTH_SECRET from env directly. In production this MUST be
+ * set; we fail closed if it isn't.
+ */
+
 const PROTECTED = ["/dashboard"];
 const ADMIN = ["/admin"];
 
@@ -10,9 +22,16 @@ export async function middleware(req: NextRequest) {
   const needsAdmin = ADMIN.some((p) => pathname.startsWith(p));
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    // Fail closed in production — a missing secret means tokens can't be
+    // verified, so we block access rather than letting anyone through.
+    return NextResponse.redirect(new URL("/auth/login", req.url));
+  }
+
   const token = await getToken({
     req,
-    secret: process.env.NEXTAUTH_SECRET ?? "dev-insecure-secret-change-me",
+    secret: secret ?? "dev-insecure-secret-change-me",
   });
 
   if (!token) {
@@ -21,7 +40,7 @@ export async function middleware(req: NextRequest) {
     url.searchParams.set("from", pathname);
     return NextResponse.redirect(url);
   }
-  if (needsAdmin && (token as any).role !== "admin") {
+  if (needsAdmin && (token as { role?: string }).role !== "admin") {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

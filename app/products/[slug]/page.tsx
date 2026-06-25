@@ -72,7 +72,12 @@ export default async function ProductDetailPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Escape `<` so a product name containing `</script>` can't break
+        // out of the script tag. Defense-in-depth even though only admins
+        // can write product names.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <article className="container py-12 lg:py-16">
         <nav className="text-xs text-muted-foreground mb-6">

@@ -250,9 +250,14 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   const push = useToast((s) => s.push);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Controlled password input so we can clear it after a failed attempt
+  // (security: never echo back the password the user just got wrong).
+  const [password, setPassword] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     const form = new FormData(e.currentTarget);
     setLoading(true);
     const res = await signIn("credentials", {
@@ -262,7 +267,11 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
     });
     setLoading(false);
     if (res?.error) {
-      push({ title: "Sign-in failed", description: res.error, tone: "error" });
+      // Generic message — never reveal whether email or password was wrong.
+      const msg = "Email or password is wrong.";
+      setError(msg);
+      push({ title: "Sign-in failed", description: msg, tone: "error" });
+      setPassword(""); // clear the password input on every failed attempt
       return;
     }
     push({ title: "Welcome back", tone: "success" });
@@ -327,6 +336,8 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
               autoComplete="current-password"
               required
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className={inputClass + " pr-11"}
             />
             <button
@@ -339,6 +350,17 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
             </button>
           </InputShell>
         </Field>
+
+        {error && (
+          <Field delay={0}>
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 px-3.5 py-2.5 text-xs text-destructive"
+            >
+              {error}
+            </div>
+          </Field>
+        )}
 
         <Field delay={0.2}>
           <Button

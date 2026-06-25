@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
+import {
+  getClientIp,
+  rateLimit,
+  rateLimitedResponse,
+} from "@/lib/rate-limit";
 
 const Schema = z.object({
-  productId: z.string().min(1),
+  productId: z.string().min(1).max(64),
   rating: z.number().int().min(1).max(5),
   title: z.string().min(2).max(120),
   body: z.string().min(8).max(2000),
@@ -22,6 +27,14 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Sign in to leave a review." }, { status: 401 });
   }
+
+  // 10 reviews per user-day. Combats sock-puppet review spam.
+  const limit = await rateLimit({
+    key: `review:${user.id}:${getClientIp(req)}`,
+    max: 10,
+    windowMs: 24 * 60 * 60_000,
+  });
+  if (!limit.ok) return rateLimitedResponse(limit);
 
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);

@@ -3,20 +3,35 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
+import {
+  getClientIp,
+  rateLimit,
+  rateLimitedResponse,
+} from "@/lib/rate-limit";
 
 const Schema = z.object({
   name: z.string().min(1).max(80),
-  email: z.string().email(),
+  email: z.string().email().max(200),
   password: z.string().min(6).max(128),
 });
 
 export async function POST(req: Request) {
+  // ── Rate limit: 5 signups per IP per 15 minutes ──────────────────────────
+  const ip = getClientIp(req);
+  const limit = await rateLimit({
+    key: `register:${ip}`,
+    max: 5,
+    windowMs: 15 * 60_000,
+  });
+  if (!limit.ok) return rateLimitedResponse(limit);
+
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid form" }, { status: 400 });
   }
-  const { name, email, password } = parsed.data;
+  const { name, email: rawEmail, password } = parsed.data;
+  const email = rawEmail.toLowerCase().trim();
 
   if (!prisma) {
     // Mock mode: pretend success so the UI flow completes.
