@@ -112,7 +112,9 @@ export async function POST(req: Request) {
 
   let id: string;
   if (prisma) {
-    const order = await prisma.order.create({
+    // Alias to a non-null local so the type narrows inside closures below.
+    const db = prisma;
+    const order = await db.order.create({
       data: {
         userId: me?.id,
         customerName: customer.name,
@@ -142,7 +144,7 @@ export async function POST(req: Request) {
     // try so a missing product (e.g. mock IDs) doesn't blow up the order.
     await Promise.all(
       items.map((i) =>
-        prisma.product
+        db.product
           .update({
             where: { id: i.productId },
             data: { stock: { decrement: i.quantity } },
@@ -153,7 +155,7 @@ export async function POST(req: Request) {
 
     // Increment the coupon's `uses` counter so admins can track redemption.
     if (coupon) {
-      await prisma.coupon
+      await db.coupon
         .update({
           where: { code: coupon.code },
           data: { uses: { increment: 1 } },
