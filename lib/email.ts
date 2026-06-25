@@ -1,19 +1,19 @@
+import nodemailer, { type Transporter } from "nodemailer";
+
 /**
  * Email service.
  *
- * In development this prints messages to the console — enough to verify
- * flows without setting up a provider. In production, swap the `transport`
- * variable for Resend / Postmark / SendGrid / SES — every call site already
- * uses the same `sendEmail()` signature.
+ * Two modes, picked at runtime:
  *
- * Example Resend swap:
- *   import { Resend } from "resend";
- *   const resend = new Resend(process.env.RESEND_API_KEY);
- *   transport = async ({ to, subject, text, html, replyTo }) => {
- *     await resend.emails.send({
- *       from: FROM, to, subject, text, html, reply_to: replyTo,
- *     });
- *   };
+ *  - **SMTP** when `SMTP_HOST` is set in env. We lazily build a nodemailer
+ *    transport on first use and reuse it for the lifetime of the process.
+ *    Works with Gmail, Resend SMTP, Postmark SMTP, SES SMTP, etc.
+ *
+ *  - **Console** in dev / when SMTP isn't configured. Messages print to the
+ *    logs so flows are verifiable without an email provider.
+ *
+ * Failures are swallowed — a transactional email going down should NEVER
+ * roll back a successful checkout / signup.
  */
 
 interface EmailPayload {
@@ -26,25 +26,61 @@ interface EmailPayload {
 
 const FROM = process.env.EMAIL_FROM ?? "BagsArt <hello@bagsart.dev>";
 
-type Transport = (p: EmailPayload) => Promise<void>;
+let transporter: Transporter | null = null;
+let transporterTried = false;
 
-const consoleTransport: Transport = async (payload) => {
-  console.log(
-    "✉  [email/dev]",
-    JSON.stringify(
-      { from: FROM, ...payload, text: payload.text?.slice(0, 200) + "…" },
-      null,
-      2
-    )
-  );
-};
+function getTransporter(): Transporter | null {
+  if (transporterTried) return transporter;
+  transporterTried = true;
 
-// Swap this for a real provider in production.
-const transport: Transport = consoleTransport;
+  if (!process.env.SMTP_HOST) return null;
+
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    // Gmail (587) uses STARTTLS, which nodemailer enables when secure=false.
+    // Set SMTP_SECURE=true for port 465 / implicit TLS.
+    secure: process.env.SMTP_SECURE === "true",
+    auth:
+      process.env.SMTP_USER && process.env.SMTP_PASS
+        ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          }
+        : undefined,
+  });
+
+  return transporter;
+}
+
+async function send(payload: EmailPayload): Promise<void> {
+  const t = getTransporter();
+
+  if (!t) {
+    console.log(
+      "✉  [email/dev]",
+      JSON.stringify(
+        { from: FROM, ...payload, text: payload.text?.slice(0, 200) + "…" },
+        null,
+        2
+      )
+    );
+    return;
+  }
+
+  await t.sendMail({
+    from: FROM,
+    to: Array.isArray(payload.to) ? payload.to.join(",") : payload.to,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+    replyTo: payload.replyTo,
+  });
+}
 
 export async function sendEmail(payload: EmailPayload) {
   try {
-    await transport(payload);
+    await send(payload);
   } catch (err) {
     // Never let an email failure break a checkout / signup flow.
     console.error("✉  email failure", err);

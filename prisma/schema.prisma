@@ -1,4 +1,4 @@
-// BagsArt Prisma schema — MySQL
+// BagsArt Prisma schema — PostgreSQL (Neon / Supabase / Vercel Postgres)
 // Run `npx prisma generate` after install, and `npx prisma db push` (or
 // `npx prisma migrate dev`) when DATABASE_URL is configured.
 
@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
