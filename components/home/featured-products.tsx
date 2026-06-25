@@ -3,15 +3,24 @@ import { SectionHeader } from "@/components/ui/section";
 import { ProductRail } from "@/components/product/product-rail";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import { listProducts } from "@/lib/queries";
+import {
+  getStorefrontConfig,
+  listProducts,
+  resolveProductsByIds,
+} from "@/lib/queries";
 
 export async function FeaturedProducts() {
-  // Pull a generous list so the horizontal rail has room to breathe — featured
-  // pieces first, padded with the rest if there aren't enough featured ones.
-  const { products: featured } = await listProducts({ perPage: 50 });
-  const head = featured.filter((p) => p.featured);
-  const tail = featured.filter((p) => !p.featured);
-  const products = [...head, ...tail].slice(0, 10);
+  // If the admin has curated this section, honour their order. Otherwise
+  // fall back to featured-first, padded with the rest.
+  const curated = await getStorefrontConfig<string[]>("featured");
+  let products = curated ? await resolveProductsByIds(curated) : [];
+
+  if (products.length === 0) {
+    const { products: catalogue } = await listProducts({ perPage: 50 });
+    const head = catalogue.filter((p) => p.featured);
+    const tail = catalogue.filter((p) => !p.featured);
+    products = [...head, ...tail].slice(0, 10);
+  }
 
   return (
     <Reveal as="section" className="container py-20">

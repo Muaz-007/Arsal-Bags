@@ -3,13 +3,20 @@ import { ProductRail } from "@/components/product/product-rail";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/ui/reveal";
-import { getSaleProducts } from "@/lib/queries";
+import {
+  getSaleProducts,
+  getStorefrontConfig,
+  resolveProductsByIds,
+} from "@/lib/queries";
 
 /**
  * Summer Sale — sale banner + horizontal product rail.
+ * Honors admin-curated picks via the `sale` storefront key.
  */
 export async function SummerSale() {
-  const products = await getSaleProducts(10);
+  const curated = await getStorefrontConfig<string[]>("sale");
+  let products = curated ? await resolveProductsByIds(curated) : [];
+  if (products.length === 0) products = await getSaleProducts(10);
 
   return (
     <Reveal as="section" className="container py-20">

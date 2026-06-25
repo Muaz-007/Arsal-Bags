@@ -39,7 +39,11 @@ const ITEMS = [
   { label: "Evening", href: "/products?collection=evening", image: img("photo-1559563458-527698bf5295") },
 ];
 
-const RESUME_DELAY_MS = 1200;
+// Mouse leaves → resume almost instantly (the user has moved on).
+// Touch ends   → wait a moment, so the strip doesn't yank itself out from
+//                under a still-reading finger.
+const MOUSE_RESUME_MS = 120;
+const TOUCH_RESUME_MS = 1000;
 
 export function CategoryStrip() {
   const loop = [...ITEMS, ...ITEMS];
@@ -51,9 +55,9 @@ export function CategoryStrip() {
     resumeTimer.current = null;
     setPaused(true);
   };
-  const resumeSoon = () => {
+  const resumeAfter = (ms: number) => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    resumeTimer.current = setTimeout(() => setPaused(false), RESUME_DELAY_MS);
+    resumeTimer.current = setTimeout(() => setPaused(false), ms);
   };
 
   return (
@@ -61,9 +65,9 @@ export function CategoryStrip() {
       className="relative overflow-hidden border-y border-border bg-background py-6 sm:py-8"
       aria-label="Shop by category"
       onMouseEnter={pause}
-      onMouseLeave={resumeSoon}
+      onMouseLeave={() => resumeAfter(MOUSE_RESUME_MS)}
       onTouchStart={pause}
-      onTouchEnd={resumeSoon}
+      onTouchEnd={() => resumeAfter(TOUCH_RESUME_MS)}
     >
       {/* Edge fades so items glide in / out instead of cutting off */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-background to-transparent z-10" />

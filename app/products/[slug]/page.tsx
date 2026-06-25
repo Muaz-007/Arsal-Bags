@@ -39,8 +39,41 @@ export default async function ProductDetailPage({
   const related = await getRelatedProducts(params.slug);
   const onSale = product.compareAt && product.compareAt > product.price;
 
+  // Product schema.org JSON-LD for rich Google results
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    image: product.images,
+    sku: product.id,
+    brand: { "@type": "Brand", name: "BagsArt" },
+    aggregateRating:
+      product.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviewCount,
+          }
+        : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/products/${product.slug}`,
+      priceCurrency: product.currency,
+      price: product.price,
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="container py-12 lg:py-16">
         <nav className="text-xs text-muted-foreground mb-6">
           <span>Shop</span>

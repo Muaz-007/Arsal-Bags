@@ -3,14 +3,21 @@ import { SectionHeader } from "@/components/ui/section";
 import { ProductRail } from "@/components/product/product-rail";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import { getBestSellers } from "@/lib/queries";
+import {
+  getBestSellers,
+  getStorefrontConfig,
+  resolveProductsByIds,
+} from "@/lib/queries";
 
 /**
  * Best Sellers — ranked horizontal rail. Pulls a longer list (10) so users
  * can scroll through the rankings rather than seeing only the top four.
+ * If the admin has manually pinned best sellers, that order wins.
  */
 export async function BestSellers() {
-  const products = await getBestSellers(10);
+  const curated = await getStorefrontConfig<string[]>("bestsellers");
+  let products = curated ? await resolveProductsByIds(curated) : [];
+  if (products.length === 0) products = await getBestSellers(10);
 
   return (
     <section className="border-y border-border bg-muted/30 py-20">

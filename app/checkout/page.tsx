@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,52 +11,101 @@ import { Input, Label } from "@/components/ui/input";
 import { useCart } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { SavedAddressPicker } from "@/components/checkout/saved-address-picker";
+import type { SavedAddress } from "@/types/address";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const authed = !!session?.user;
   const lines = useCart((s) => s.lines);
   const subtotal = useCart((s) => s.subtotal());
   const shipping = useCart((s) => s.shipping());
   const tax = useCart((s) => s.tax());
   const discount = useCart((s) => s.discount());
   const total = useCart((s) => s.total());
+  const coupon = useCart((s) => s.coupon);
   const clear = useCart((s) => s.clear);
   const push = useToast((s) => s.push);
 
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<SavedAddress | null>(null);
+  const [newMode, setNewMode] = useState(false);
+  const [saveAddress, setSaveAddress] = useState(false);
+
+  function pickSaved(a: SavedAddress) {
+    setSelected(a);
+    setNewMode(false);
+  }
+
+  function useNew() {
+    setSelected(null);
+    setNewMode(true);
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     const form = new FormData(e.currentTarget);
+
+    // Prefer the picked saved address when present, otherwise read the form.
+    const address = selected
+      ? {
+          name: selected.name,
+          email: (form.get("email") as string) ?? session?.user?.email ?? "",
+          address: selected.address,
+          city: selected.city,
+          country: selected.country,
+          postal: selected.postal,
+        }
+      : {
+          name: form.get("name"),
+          email: form.get("email"),
+          address: form.get("address"),
+          city: form.get("city"),
+          country: form.get("country"),
+          postal: form.get("postal"),
+        };
+
     const payload = {
-      customer: {
-        name: form.get("name"),
-        email: form.get("email"),
-        address: form.get("address"),
-        city: form.get("city"),
-        country: form.get("country"),
-        postal: form.get("postal"),
-      },
+      customer: address,
       items: lines,
-      subtotal,
-      shipping,
-      tax,
-      discount,
-      total,
+      couponCode: coupon?.code,
     };
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Checkout failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Checkout failed");
+      }
       const data = await res.json();
+
+      // Save the new address for next time, if the user opted in.
+      if (authed && !selected && saveAddress) {
+        await fetch("/api/addresses", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name: address.name,
+            address: address.address,
+            city: address.city,
+            country: address.country,
+            postal: address.postal,
+          }),
+        }).catch(() => null);
+      }
+
       clear();
       router.push(`/checkout/success?order=${data.id}`);
-    } catch {
-      push({ title: "Payment failed", description: "Please try again.", tone: "error" });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Please try again.";
+      push({ title: "Payment failed", description: message, tone: "error" });
     } finally {
       setLoading(false);
     }
@@ -71,6 +121,11 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  // When a saved address is selected we hide the address inputs (still send
+  // their values via the picked record). The email + name fields remain in
+  // case the user wants to override the auto-filled contact.
+  const showAddressInputs = !selected;
 
   return (
     <div className="container py-12 grid gap-10 lg:grid-cols-[1fr_400px]">
@@ -93,35 +148,77 @@ export default function CheckoutPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" name="name" required />
+              <Input
+                id="name"
+                name="name"
+                required={!selected}
+                defaultValue={session?.user?.name ?? ""}
+                disabled={!!selected}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                defaultValue={session?.user?.email ?? ""}
+              />
             </div>
           </div>
         </fieldset>
 
         <fieldset className="space-y-4">
           <legend className="font-display text-lg mb-1">Shipping</legend>
-          <div className="space-y-1.5">
-            <Label htmlFor="address">Street address</Label>
-            <Input id="address" name="address" required />
-          </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" name="city" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="country">Country</Label>
-              <Input id="country" name="country" required defaultValue="United States" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="postal">Postal code</Label>
-              <Input id="postal" name="postal" required />
-            </div>
-          </div>
+
+          {/* Saved-address picker (signed-in only, returns null otherwise) */}
+          <SavedAddressPicker
+            onSelect={pickSaved}
+            onUseNew={useNew}
+            selectedId={selected?.id}
+            newMode={newMode || (authed && !selected)}
+          />
+
+          {showAddressInputs && (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="address">Street address</Label>
+                <Input id="address" name="address" required />
+              </div>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="city">City</Label>
+                  <Input id="city" name="city" required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    name="country"
+                    required
+                    defaultValue="Pakistan"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="postal">Postal code</Label>
+                  <Input id="postal" name="postal" required />
+                </div>
+              </div>
+
+              {authed && (
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={saveAddress}
+                    onChange={(e) => setSaveAddress(e.target.checked)}
+                    className="h-4 w-4 rounded border-input accent-gold"
+                  />
+                  Save this address to my profile for next time
+                </label>
+              )}
+            </>
+          )}
         </fieldset>
 
         <fieldset className="space-y-4">

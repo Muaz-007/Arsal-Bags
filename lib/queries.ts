@@ -1,25 +1,167 @@
-import { PRODUCTS, ORDERS, USERS, COUPONS } from "@/lib/mock-data";
-import type { Product, Order, AppUser, Coupon } from "@/types";
+import { prisma } from "@/lib/db";
+import {
+  PRODUCTS,
+  ORDERS,
+  USERS,
+  COUPONS,
+} from "@/lib/mock-data";
+import type {
+  Product,
+  Order,
+  AppUser,
+  Coupon,
+  Category,
+  OrderStatus,
+} from "@/types";
 
 /**
- * Domain queries — currently backed by in-memory mock data so the app runs
- * before MySQL is provisioned. Each function has a clear shape so it can be
- * swapped for a Prisma query (see lib/db.ts) without touching call sites.
+ * Domain queries — Prisma-backed when DATABASE_URL is set, mock-backed
+ * otherwise. Each function has a stable shape so call sites (server
+ * components + API routes) don't have to know which mode is active.
  */
 
-export async function listProducts(opts: {
-  category?: string;
-  collection?: string;
-  search?: string;
-  sort?: "latest" | "popular" | "price-asc" | "price-desc";
-  minPrice?: number;
-  maxPrice?: number;
-  inStock?: boolean;
-  page?: number;
-  perPage?: number;
-} = {}): Promise<{ products: Product[]; total: number; page: number; perPage: number }> {
-  let items = PRODUCTS.slice();
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const D = (v: unknown): number =>
+  typeof v === "number" ? v : v === null || v === undefined ? 0 : Number(v);
+
+function mapDbProduct(p: any): Product {
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    tagline: p.tagline,
+    description: p.description,
+    price: D(p.price),
+    compareAt: p.compareAt != null ? D(p.compareAt) : undefined,
+    currency: "USD",
+    category: p.category as Category,
+    collection: p.collection ?? undefined,
+    colors: Array.isArray(p.colors) ? p.colors : [],
+    materials: Array.isArray(p.materials) ? p.materials : [],
+    images: Array.isArray(p.images) ? p.images : [],
+    stock: p.stock,
+    featured: !!p.featured,
+    rating: p.rating ?? 0,
+    reviewCount: p.reviewCount ?? 0,
+    createdAt: (p.createdAt instanceof Date
+      ? p.createdAt.toISOString()
+      : String(p.createdAt)),
+  };
+}
+
+function mapDbOrder(o: any): Order {
+  return {
+    id: o.id,
+    userId: o.userId ?? "",
+    customerName: o.customerName,
+    customerEmail: o.customerEmail,
+    items: (o.items ?? []).map((i: any) => ({
+      productId: i.productId,
+      slug: i.product?.slug ?? "",
+      name: i.name,
+      image: i.image,
+      price: D(i.price),
+      quantity: i.quantity,
+      color: i.color ?? undefined,
+    })),
+    subtotal: D(o.subtotal),
+    shipping: D(o.shipping),
+    tax: D(o.tax),
+    total: D(o.total),
+    status: o.status as OrderStatus,
+    createdAt:
+      o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt),
+  };
+}
+
+// ─── Catalogue ───────────────────────────────────────────────────────────────
+
+export async function listProducts(
+  opts: {
+    category?: string;
+    collection?: string;
+    search?: string;
+    sort?: "latest" | "popular" | "price-asc" | "price-desc";
+    minPrice?: number;
+    maxPrice?: number;
+    inStock?: boolean;
+    saleOnly?: boolean;
+    page?: number;
+    perPage?: number;
+  } = {}
+): Promise<{ products: Product[]; total: number; page: number; perPage: number }> {
+  const page = Math.max(1, opts.page ?? 1);
+  const perPage = Math.max(1, opts.perPage ?? 12);
+
+  if (prisma) {
+    const where: any = {};
+    if (opts.category) where.category = opts.category;
+    if (opts.collection) where.collection = opts.collection;
+    if (opts.inStock) where.stock = { gt: 0 };
+    if (opts.saleOnly) where.compareAt = { not: null };
+    if (opts.search) {
+      where.OR = [
+        { name: { contains: opts.search } },
+        { tagline: { contains: opts.search } },
+        { description: { contains: opts.search } },
+      ];
+    }
+    if (opts.minPrice != null || opts.maxPrice != null) {
+      where.price = {};
+      if (opts.minPrice != null) where.price.gte = opts.minPrice;
+      if (opts.maxPrice != null) where.price.lte = opts.maxPrice;
+    }
+
+    const orderBy =
+      opts.sort === "popular"
+        ? { reviewCount: "desc" as const }
+        : opts.sort === "price-asc"
+          ? { price: "asc" as const }
+          : opts.sort === "price-desc"
+            ? { price: "desc" as const }
+            : { createdAt: "desc" as const };
+
+    // For sale, fetch a wider window then post-filter on `compareAt > price`
+    // (MySQL can't easily express a row-level column compare via Prisma).
+    if (opts.saleOnly) {
+      const candidates = await prisma.product.findMany({
+        where,
+        orderBy,
+        take: 200,
+      });
+      const filtered = candidates
+        .map(mapDbProduct)
+        .filter((p) => p.compareAt && p.compareAt > p.price);
+      const total = filtered.length;
+      return {
+        products: filtered.slice((page - 1) * perPage, page * perPage),
+        total,
+        page,
+        perPage,
+      };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return {
+      products: items.map(mapDbProduct),
+      total,
+      page,
+      perPage,
+    };
+  }
+
+  // ── Mock fallback ─────────────────────────────────────────────────────────
+  let items = PRODUCTS.slice();
   if (opts.category) items = items.filter((p) => p.category === opts.category);
   if (opts.collection) items = items.filter((p) => p.collection === opts.collection);
   if (opts.search) {
@@ -34,6 +176,7 @@ export async function listProducts(opts: {
   if (typeof opts.minPrice === "number") items = items.filter((p) => p.price >= opts.minPrice!);
   if (typeof opts.maxPrice === "number") items = items.filter((p) => p.price <= opts.maxPrice!);
   if (opts.inStock) items = items.filter((p) => p.stock > 0);
+  if (opts.saleOnly) items = items.filter((p) => p.compareAt && p.compareAt > p.price);
 
   switch (opts.sort) {
     case "popular":
@@ -47,38 +190,95 @@ export async function listProducts(opts: {
       break;
     default:
       items.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
   }
 
-  const total = items.length;
-  const page = Math.max(1, opts.page ?? 1);
-  const perPage = Math.max(1, opts.perPage ?? 12);
-  const start = (page - 1) * perPage;
-
   return {
-    products: items.slice(start, start + perPage),
-    total,
+    products: items.slice((page - 1) * perPage, (page - 1) * perPage + perPage),
+    total: items.length,
     page,
     perPage,
   };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  if (prisma) {
+    const p = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        reviews: {
+          orderBy: { createdAt: "desc" },
+          take: 12,
+        },
+      },
+    });
+    if (!p) return null;
+    const product = mapDbProduct(p);
+    product.reviews = (p as any).reviews?.map((r: any) => ({
+      id: r.id,
+      author: r.author,
+      rating: r.rating,
+      title: r.title,
+      body: r.body,
+      createdAt: r.createdAt.toISOString(),
+    }));
+    return product;
+  }
   return PRODUCTS.find((p) => p.slug === slug) ?? null;
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  if (prisma) {
+    const p = await prisma.product.findUnique({ where: { id } });
+    return p ? mapDbProduct(p) : null;
+  }
+  return PRODUCTS.find((p) => p.id === id) ?? null;
+}
+
 export async function getFeaturedProducts(): Promise<Product[]> {
+  if (prisma) {
+    const rows = await prisma.product.findMany({
+      where: { featured: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map(mapDbProduct);
+  }
   return PRODUCTS.filter((p) => p.featured);
 }
 
-export async function getBestSellers(limit = 4): Promise<Product[]> {
+export async function getBestSellers(limit = 10): Promise<Product[]> {
+  if (prisma) {
+    const rows = await prisma.product.findMany({
+      orderBy: { reviewCount: "desc" },
+      take: limit,
+    });
+    return rows.map(mapDbProduct);
+  }
   return PRODUCTS.slice()
     .sort((a, b) => b.reviewCount - a.reviewCount)
     .slice(0, limit);
 }
 
-export async function getSaleProducts(limit = 4): Promise<Product[]> {
+export async function getSaleProducts(limit = 10): Promise<Product[]> {
+  if (prisma) {
+    // Prisma can't easily express a `compareAt > price` row-level filter on
+    // MySQL without raw SQL, so we fetch the candidates and post-filter.
+    const rows = await prisma.product.findMany({
+      where: { compareAt: { not: null } },
+      take: 80,
+    });
+    return rows
+      .map(mapDbProduct)
+      .filter((p) => p.compareAt && p.compareAt > p.price)
+      .sort((a, b) => {
+        const da = (b.compareAt! - b.price) / b.compareAt!;
+        const db = (a.compareAt! - a.price) / a.compareAt!;
+        return da - db;
+      })
+      .slice(0, limit);
+  }
   return PRODUCTS.filter((p) => p.compareAt && p.compareAt > p.price)
     .sort((a, b) => {
       const da = (b.compareAt! - b.price) / b.compareAt!;
@@ -89,6 +289,16 @@ export async function getSaleProducts(limit = 4): Promise<Product[]> {
 }
 
 export async function getRelatedProducts(slug: string): Promise<Product[]> {
+  if (prisma) {
+    const target = await prisma.product.findUnique({ where: { slug } });
+    if (!target) return [];
+    const rows = await prisma.product.findMany({
+      where: { category: target.category, NOT: { slug } },
+      take: 4,
+      orderBy: { reviewCount: "desc" },
+    });
+    return rows.map(mapDbProduct);
+  }
   const target = PRODUCTS.find((p) => p.slug === slug);
   if (!target) return [];
   return PRODUCTS.filter(
@@ -96,19 +306,138 @@ export async function getRelatedProducts(slug: string): Promise<Product[]> {
   ).slice(0, 4);
 }
 
+// ─── Orders ─────────────────────────────────────────────────────────────────
+
 export async function listOrders(): Promise<Order[]> {
+  if (prisma) {
+    const rows = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { items: { include: { product: { select: { slug: true } } } } },
+    });
+    return rows.map(mapDbOrder);
+  }
   return ORDERS.slice().sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
+export async function listOrdersForUser(userId: string): Promise<Order[]> {
+  if (prisma) {
+    const rows = await prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: { items: { include: { product: { select: { slug: true } } } } },
+    });
+    return rows.map(mapDbOrder);
+  }
+  return ORDERS.filter((o) => o.userId === userId);
+}
+
+export async function getOrderById(id: string): Promise<Order | null> {
+  if (prisma) {
+    const o = await prisma.order.findUnique({
+      where: { id },
+      include: { items: { include: { product: { select: { slug: true } } } } },
+    });
+    return o ? mapDbOrder(o) : null;
+  }
+  return ORDERS.find((o) => o.id === id) ?? null;
+}
+
+// ─── Users ──────────────────────────────────────────────────────────────────
+
 export async function listUsers(): Promise<AppUser[]> {
+  if (prisma) {
+    const rows = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        _count: { select: { orders: true } },
+      },
+    });
+    return rows.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role as "customer" | "admin",
+      createdAt: u.createdAt.toISOString(),
+      ordersCount: u._count.orders,
+    }));
+  }
   return USERS.slice();
 }
 
+// ─── Wishlist ───────────────────────────────────────────────────────────────
+
+export async function listWishlistProducts(userId: string): Promise<Product[]> {
+  if (prisma) {
+    const items = await prisma.wishlistItem.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: { product: true },
+    });
+    return items.map((i) => mapDbProduct(i.product));
+  }
+  return [];
+}
+
+// ─── Coupons ────────────────────────────────────────────────────────────────
+
 export async function listCoupons(): Promise<Coupon[]> {
+  if (prisma) {
+    const rows = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+    return rows.map((c) => ({
+      code: c.code,
+      type: c.type as "percent" | "fixed",
+      value: D(c.value),
+      active: c.active,
+      expiresAt: c.expiresAt?.toISOString(),
+      uses: c.uses,
+    }));
+  }
   return COUPONS.slice();
 }
+
+// ─── Storefront config ─────────────────────────────────────────────────────
+
+type StorefrontKey = "hero" | "strip" | "featured" | "bestsellers" | "sale";
+
+/**
+ * Read an admin-curated section value out of `StorefrontConfig`. Returns
+ * `null` when the key is unset OR when the DB isn't reachable, so callers
+ * can fall back to their hardcoded defaults gracefully.
+ */
+export async function getStorefrontConfig<T = unknown>(
+  key: StorefrontKey
+): Promise<T | null> {
+  if (!prisma) return null;
+  try {
+    const row = await prisma.storefrontConfig.findUnique({ where: { key } });
+    return (row?.value as T) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a list of product IDs stored in StorefrontConfig into real Products. */
+export async function resolveProductsByIds(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) return [];
+  if (prisma) {
+    const rows = await prisma.product.findMany({
+      where: { id: { in: ids } },
+    });
+    // Preserve the admin-curated order.
+    const byId = new Map(rows.map((r) => [r.id, mapDbProduct(r)]));
+    return ids.map((id) => byId.get(id)).filter(Boolean) as Product[];
+  }
+  return PRODUCTS.filter((p) => ids.includes(p.id));
+}
+
+// ─── Admin stats ────────────────────────────────────────────────────────────
 
 export interface AdminStats {
   revenue: number;
@@ -120,6 +449,49 @@ export interface AdminStats {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
+  if (prisma) {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [recentOrders, customers, topItems] = await Promise.all([
+      prisma.order.findMany({
+        where: { createdAt: { gte: since } },
+        select: { total: true, createdAt: true },
+      }),
+      prisma.user.count({ where: { role: "customer" } }),
+      prisma.orderItem.groupBy({
+        by: ["productId", "name"],
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 5,
+      }),
+    ]);
+
+    const revenue = recentOrders.reduce((a, o) => a + D(o.total), 0);
+
+    // Bucket by day for the weekly chart
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const weekly = days.map((d) => ({ day: d, revenue: 0, orders: 0 }));
+    for (const o of recentOrders) {
+      const idx = new Date(o.createdAt).getDay();
+      weekly[idx].revenue += D(o.total);
+      weekly[idx].orders += 1;
+    }
+    // Reorder Mon-Sun
+    const ordered = [...weekly.slice(1), weekly[0]];
+
+    return {
+      revenue,
+      orders: recentOrders.length,
+      customers,
+      conversion: 3.4,
+      weekly: ordered,
+      topProducts: topItems.map((t) => ({
+        name: t.name,
+        sold: t._sum.quantity ?? 0,
+      })),
+    };
+  }
+
+  // Mock mode
   const revenue = ORDERS.reduce((a, o) => a + o.total, 0);
   return {
     revenue,

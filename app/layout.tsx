@@ -6,6 +6,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { WishlistFab } from "@/components/layout/wishlist-fab";
+import { WishlistSync } from "@/components/layout/wishlist-sync";
 import { ToastViewport } from "@/components/ui/toast";
 
 const inter = Inter({
@@ -56,7 +58,9 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
+          <WishlistFab />
           <ScrollToTop />
+          <WishlistSync />
           <ToastViewport />
         </Providers>
       </body>

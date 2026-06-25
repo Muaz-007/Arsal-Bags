@@ -36,7 +36,10 @@ const sections = [
 
 export function Footer() {
   const pathname = usePathname();
+  // Hide the footer inside admin (it has its own chrome) and on auth pages
+  // so the sign-in / sign-up form is the only thing on screen.
   if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/auth")) return null;
 
   return (
     <footer className="border-t border-border bg-background">

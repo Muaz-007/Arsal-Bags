@@ -43,6 +43,7 @@ model User {
   sessions      Session[]
   orders        Order[]
   reviews       Review[]
+  wishlist      WishlistItem[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -107,6 +108,7 @@ model Product {
 
   reviews     Review[]
   orderItems  OrderItem[]
+  wishlistedBy WishlistItem[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -114,6 +116,31 @@ model Product {
   @@index([category])
   @@index([collection])
   @@index([featured])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// Admin-controlled storefront config — what shows in the hero, the strip,
+// and which products are pinned to Featured / Best sellers / Summer sale.
+// Stored as JSON per section key so the schema doesn't need a migration
+// every time a section adds a field.
+model StorefrontConfig {
+  key       String   @id
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
 }
 
 model Review {
@@ -176,4 +203,40 @@ model Coupon {
   uses      Int        @default(0)
 
   createdAt DateTime   @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  active    Boolean  @default(true)
+  source    String?
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  token     String   @id
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SavedAddress {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String?
+  name         String
+  address      String
+  city         String
+  country      String
+  postal       String
+  phone        String?
+  isDefault    Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }

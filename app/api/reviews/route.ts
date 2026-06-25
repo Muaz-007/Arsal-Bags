@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth-server";
+
+const Schema = z.object({
+  productId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  title: z.string().min(2).max(120),
+  body: z.string().min(8).max(2000),
+});
+
+/**
+ * POST /api/reviews — create a review for a product. Requires sign-in;
+ * stamps the review with the user's display name.
+ *
+ * After insertion, we update the product's `rating` (running average) and
+ * `reviewCount` so the PDP doesn't have to recompute on every read.
+ */
+export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Sign in to leave a review." }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null);
+  const parsed = Schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid review" }, { status: 400 });
+  }
+  const { productId, rating, title, body: text } = parsed.data;
+
+  if (!prisma) {
+    return NextResponse.json({ ok: true });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.review.create({
+      data: {
+        productId,
+        userId: user.id,
+        author: user.name ?? "Customer",
+        rating,
+        title,
+        body: text,
+      },
+    });
+
+    const agg = await tx.review.aggregate({
+      where: { productId },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        rating: agg._avg.rating ?? rating,
+        reviewCount: agg._count._all,
+      },
+    });
+  });
+
+  return NextResponse.json({ ok: true });
+}

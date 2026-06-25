@@ -14,18 +14,32 @@ import {
   Settings,
   Menu,
   X,
+  LayoutTemplate,
+  Boxes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 const NAV = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/coupons", label: "Coupons", icon: Tag },
-  { href: "/admin/cms", label: "CMS", icon: ImageIcon },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { group: "Overview", items: [
+    { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  ]},
+  { group: "Storefront", items: [
+    { href: "/admin/storefront", label: "Sections", icon: LayoutTemplate },
+    { href: "/admin/products", label: "Products", icon: Package },
+    { href: "/admin/inventory", label: "Inventory", icon: Boxes },
+    { href: "/admin/cms", label: "Media", icon: ImageIcon },
+  ]},
+  { group: "Sales", items: [
+    { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+    { href: "/admin/coupons", label: "Coupons", icon: Tag },
+  ]},
+  { group: "Audience", items: [
+    { href: "/admin/users", label: "Users", icon: Users },
+  ]},
+  { group: "System", items: [
+    { href: "/admin/settings", label: "Settings", icon: Settings },
+  ]},
 ];
 
 function NavList({
@@ -36,26 +50,36 @@ function NavList({
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex-1 space-y-1">
-      {NAV.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname?.startsWith(href);
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-              active
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
-        );
-      })}
+    <nav className="flex-1 space-y-5 overflow-y-auto">
+      {NAV.map((group) => (
+        <div key={group.group}>
+          <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+            {group.group}
+          </p>
+          <ul className="space-y-0.5">
+            {group.items.map(({ href, label, icon: Icon, exact }) => {
+              const active = exact ? pathname === href : pathname?.startsWith(href);
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                      active
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const Schema = z.object({
   name: z.string().min(1).max(80),
@@ -35,5 +36,9 @@ export async function POST(req: Request) {
     data: { name, email, passwordHash, role: "customer" },
     select: { id: true, name: true, email: true },
   });
+
+  // Fire-and-forget welcome email (transport handles its own errors).
+  void sendWelcomeEmail(user.email, user.name);
+
   return NextResponse.json(user, { status: 201 });
 }

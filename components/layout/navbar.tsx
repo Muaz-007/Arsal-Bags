@@ -4,11 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import {
+  Heart,
+  LogIn,
+  LogOut,
+  Menu,
+  Package,
+  Search,
+  Settings as SettingsIcon,
+  Shield,
+  ShoppingBag,
+  User,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/store/cart";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ThemeRow } from "@/components/layout/theme-row";
+import { UserMenu } from "@/components/layout/user-menu";
+import { CartButton } from "@/components/layout/cart-button";
+import { SearchPanel } from "@/components/layout/search-panel";
+import { useSearchPanel } from "@/store/search";
 
 const NAV_LINKS = [
   { href: "/products", label: "Shop" },
@@ -23,9 +42,16 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const totalItems = useCart((s) => s.totalItems());
+  const openSearch = useSearchPanel((s) => s.setOpen);
+  const { data: session, status } = useSession();
+  const user = session?.user as
+    | { name?: string | null; email?: string | null; role?: string }
+    | undefined;
+  const isAdmin = user?.role === "admin";
+  const authed = status === "authenticated";
 
   // Hide site nav inside admin shell — admin has its own chrome.
-  const isAdmin = pathname?.startsWith("/admin");
+  const isAdminRoute = pathname?.startsWith("/admin");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -42,7 +68,7 @@ export function Navbar() {
   // accidentally scroll the page underneath.
   useBodyScrollLock(open);
 
-  if (isAdmin) return null;
+  if (isAdminRoute) return null;
 
   return (
     <header
@@ -78,30 +104,17 @@ export function Navbar() {
         <div className="flex items-center gap-1">
           <button
             aria-label="Search"
-            className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-muted transition"
+            onClick={() => openSearch(true)}
+            className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
           >
             <Search className="h-4 w-4" />
           </button>
-          <ThemeToggle />
-          <Link
-            href="/auth/login"
-            aria-label="Account"
-            className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-muted transition"
-          >
-            <User className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/cart"
-            aria-label="Cart"
-            className="relative h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            {totalItems > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 grid place-items-center text-[10px] font-medium rounded-full bg-gold text-black">
-                {totalItems}
-              </span>
-            )}
-          </Link>
+          {/* Desktop only — on mobile the theme toggle lives inside the drawer */}
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+          <UserMenu />
+          <CartButton />
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
@@ -155,6 +168,23 @@ export function Navbar() {
                 </button>
               </div>
 
+              {/* When signed in: who's logged in */}
+              {authed && (
+                <div className="px-5 py-4 border-b border-border bg-muted/30">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Signed in as
+                  </p>
+                  <p className="mt-1 text-sm font-medium truncate">
+                    {user?.name ?? "Account"}
+                  </p>
+                  {user?.email && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Drawer nav */}
               <nav className="flex-1 overflow-y-auto py-5 px-5">
                 <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
@@ -174,43 +204,80 @@ export function Navbar() {
                   ))}
                 </ul>
 
+                {/* Account section — content depends on auth state */}
                 <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mt-7 mb-3">
-                  Account
+                  {authed ? "Account" : "Get started"}
                 </p>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      href="/auth/login"
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-muted transition"
-                    >
-                      <User className="h-4 w-4" />
-                      Sign in
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
+
+                {authed ? (
+                  <ul className="space-y-1">
+                    <DrawerLink
                       href="/dashboard"
-                      onClick={() => setOpen(false)}
-                      className="block rounded-md px-3 py-2.5 text-sm hover:bg-muted transition"
-                    >
-                      My orders
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/dashboard/wishlist"
-                      onClick={() => setOpen(false)}
-                      className="block rounded-md px-3 py-2.5 text-sm hover:bg-muted transition"
-                    >
-                      Wishlist
-                    </Link>
-                  </li>
-                </ul>
+                      icon={Package}
+                      label="My orders"
+                      onClose={() => setOpen(false)}
+                    />
+                    <DrawerLink
+                      href="/wishlist"
+                      icon={Heart}
+                      label="Wishlist"
+                      onClose={() => setOpen(false)}
+                    />
+                    <DrawerLink
+                      href="/dashboard/profile"
+                      icon={SettingsIcon}
+                      label="Profile"
+                      onClose={() => setOpen(false)}
+                    />
+                    {isAdmin && (
+                      <DrawerLink
+                        href="/admin"
+                        icon={Shield}
+                        label="Admin panel"
+                        onClose={() => setOpen(false)}
+                      />
+                    )}
+                  </ul>
+                ) : (
+                  <ul className="space-y-1">
+                    <DrawerLink
+                      href="/auth/signup"
+                      icon={UserPlus}
+                      label="Create account"
+                      onClose={() => setOpen(false)}
+                    />
+                    <DrawerLink
+                      href="/auth/login"
+                      icon={LogIn}
+                      label="Sign in"
+                      onClose={() => setOpen(false)}
+                    />
+                  </ul>
+                )}
+
+                {/* Preferences — theme toggle moved here from the navbar
+                    so the top bar stays minimal on phones. */}
+                <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mt-7 mb-3">
+                  Preferences
+                </p>
+                <ThemeRow />
               </nav>
 
-              {/* Drawer footer CTA */}
-              <div className="border-t border-border p-5">
+              {/* Drawer footer — Logout when authed, View bag otherwise */}
+              <div className="border-t border-border p-5 space-y-3">
+                {authed && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="w-full flex items-center justify-center gap-2 h-11 rounded-md border border-border bg-card text-sm hover:bg-muted transition"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                )}
                 <Link
                   href="/cart"
                   onClick={() => setOpen(false)}
@@ -224,7 +291,7 @@ export function Navbar() {
                     </span>
                   )}
                 </Link>
-                <p className="text-[10px] text-center text-muted-foreground mt-3 uppercase tracking-[0.18em]">
+                <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.18em]">
                   Free shipping over $250
                 </p>
               </div>
@@ -232,6 +299,33 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      <SearchPanel />
     </header>
+  );
+}
+
+function DrawerLink({
+  href,
+  icon: Icon,
+  label,
+  onClose,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClose: () => void;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        onClick={onClose}
+        className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm hover:bg-muted transition"
+      >
+        <Icon className="h-4 w-4" />
+        {label}
+      </Link>
+    </li>
   );
 }
