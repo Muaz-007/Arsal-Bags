@@ -1,4 +1,9 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import {
+  orderConfirmationTemplate,
+  passwordResetTemplate,
+  welcomeTemplate,
+} from "@/lib/email-templates";
 
 /**
  * Email service.
@@ -90,56 +95,39 @@ export async function sendEmail(payload: EmailPayload) {
 /* ─── Template helpers ────────────────────────────────────────────────── */
 
 export async function sendWelcomeEmail(to: string, name: string) {
+  const { html, text } = welcomeTemplate(name);
   return sendEmail({
     to,
     subject: "Welcome to BagsArt",
-    text: `Hi ${name},
-
-Welcome to the atelier. Your account is set up — you can track orders, save favorites, and check out faster from any device.
-
-If you have any questions, just reply to this email.
-
-— The BagsArt team`,
+    html,
+    text,
   });
 }
 
 export async function sendOrderConfirmation(
   to: string,
-  order: { id: string; customerName: string; total: number; items: { name: string; quantity: number }[] }
+  order: {
+    id: string;
+    customerName: string;
+    total: number;
+    items: { name: string; quantity: number }[];
+  }
 ) {
-  const lineSummary = order.items
-    .map((i) => `· ${i.quantity}× ${i.name}`)
-    .join("\n");
-
+  const { html, text } = orderConfirmationTemplate(order);
   return sendEmail({
     to,
     subject: `Order confirmed · ${order.id}`,
-    text: `Hi ${order.customerName},
-
-Thanks for ordering from BagsArt. Here's a summary:
-
-${lineSummary}
-
-Total: $${order.total.toFixed(2)}
-
-You can track your order from your account page at any time.
-
-— The BagsArt team`,
+    html,
+    text,
   });
 }
 
 export async function sendPasswordReset(to: string, link: string) {
+  const { html, text } = passwordResetTemplate(link);
   return sendEmail({
     to,
     subject: "Reset your BagsArt password",
-    text: `We received a request to reset your password.
-
-If this was you, click the link below to choose a new one. The link expires in one hour.
-
-${link}
-
-If it wasn't you, you can safely ignore this email.
-
-— The BagsArt team`,
+    html,
+    text,
   });
 }
