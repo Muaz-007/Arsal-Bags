@@ -51,6 +51,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${display.variable}`}
     >
+      <head>
+        {/* Speeds up the first image fetch by opening the TLS connection
+            to Unsplash before the LCP image is parsed. dns-prefetch is a
+            cheaper fallback for browsers that ignore preconnect. */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className="min-h-screen flex flex-col">
         <Providers>
           <Navbar />

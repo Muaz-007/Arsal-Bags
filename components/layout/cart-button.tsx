@@ -38,7 +38,7 @@ export function CartButton() {
       href="/cart"
       aria-label={`Cart (${totalItems} ${totalItems === 1 ? "item" : "items"})`}
       className={cn(
-        "relative h-9 w-9 grid place-items-center rounded-full transition-all",
+        "relative h-10 w-10 grid place-items-center rounded-full transition-all",
         pulse ? "bg-gold/10 ring-2 ring-gold/40" : "hover:bg-muted"
       )}
     >

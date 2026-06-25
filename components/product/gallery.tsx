@@ -78,7 +78,7 @@ export function ProductGallery({
                 : "border-border opacity-70 hover:opacity-100"
             )}
           >
-            <Image src={src} alt={`${alt} thumbnail`} fill className="object-cover" />
+            <Image src={src} alt={`${alt} — view ${i + 1}`} fill className="object-cover" />
           </button>
         ))}
       </div>

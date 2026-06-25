@@ -38,6 +38,31 @@ function clientIpFromHeaders(): string {
   }
 }
 
+// Production safety check used inside request handlers. If we throw at
+// module-load time, Next.js' build-time "collect page data" step crashes
+// before env vars are wired up. Instead, refuse to issue tokens at runtime
+// when the secret is unset — every credentials sign-in attempt fails closed.
+function secretReady(): boolean {
+  if (process.env.NEXTAUTH_SECRET) return true;
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "[auth] NEXTAUTH_SECRET is not set in production. " +
+        "Set it in your environment — auth is disabled until you do."
+    );
+    return false;
+  }
+  return true; // dev mode: fall through to the placeholder secret
+}
+
+// Emit a startup warning (once) so the issue surfaces in logs even if no
+// one tries to sign in.
+if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+  console.warn(
+    "[auth] NEXTAUTH_SECRET is missing. Set it in Vercel → Settings → " +
+      "Environment Variables. Sign-in will be refused until you do."
+  );
+}
+
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
     name: "Credentials",
@@ -49,6 +74,7 @@ const providers: NextAuthOptions["providers"] = [
       // Treat every failure mode the same — never tell the caller why.
       // The early-returns below all funnel to `null`, which NextAuth
       // surfaces as the generic CredentialsSignin error.
+      if (!secretReady()) return null; // production safety net
       if (!creds?.email || !creds?.password) return null;
       const email = String(creds.email).toLowerCase().trim();
       const password = String(creds.password);
@@ -134,17 +160,11 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  // Public marker — the real value lives in NEXTAUTH_SECRET. Refuse to
-  // boot without it in production.
-  secret:
-    process.env.NEXTAUTH_SECRET ??
-    (process.env.NODE_ENV === "production"
-      ? (() => {
-          throw new Error(
-            "NEXTAUTH_SECRET is required in production. Set it in your environment."
-          );
-        })()
-      : "dev-insecure-secret-change-me"),
+  // Real value lives in NEXTAUTH_SECRET. In production without it, sign-in
+  // fails closed (see `secretReady()` in authorize()), so the placeholder
+  // here never gets used for anything that matters — it only exists to keep
+  // module-load + build-time `collectPageData` from crashing.
+  secret: process.env.NEXTAUTH_SECRET ?? "dev-insecure-secret-change-me",
 };
 
 export { AUTH_GENERIC_ERROR };

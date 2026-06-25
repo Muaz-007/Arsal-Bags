@@ -101,11 +101,12 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
+        {/* gap-1.5 keeps targets > 6px apart (Lighthouse minimum) */}
+        <div className="flex items-center gap-1.5">
           <button
             aria-label="Search"
             onClick={() => openSearch(true)}
-            className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
+            className="h-10 w-10 grid place-items-center rounded-full hover:bg-muted transition"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -118,7 +119,7 @@ export function Navbar() {
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="md:hidden h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
+            className="md:hidden h-10 w-10 grid place-items-center rounded-full hover:bg-muted transition"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>

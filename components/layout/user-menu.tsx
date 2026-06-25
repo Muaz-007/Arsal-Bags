@@ -58,7 +58,7 @@ export function UserMenu() {
         <Link
           href="/auth/signup"
           aria-label="Join"
-          className="md:hidden h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
+          className="md:hidden h-10 w-10 grid place-items-center rounded-full hover:bg-muted transition"
         >
           <User className="h-4 w-4" />
         </Link>
@@ -82,7 +82,7 @@ export function UserMenu() {
         aria-label="Account menu"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "h-9 w-9 grid place-items-center rounded-full transition",
+          "h-10 w-10 grid place-items-center rounded-full transition",
           open ? "bg-muted" : "hover:bg-muted"
         )}
       >

@@ -15,7 +15,7 @@ export function ThemeToggle() {
     <button
       aria-label="Toggle theme"
       onClick={() => setTheme(current === "dark" ? "light" : "dark")}
-      className="relative h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
+      className="relative h-10 w-10 grid place-items-center rounded-full hover:bg-muted transition"
     >
       {/* Both icons share the same grid cell (col-start-1 row-start-1) so
           they stack on top of each other and inherit `place-items-center`.
