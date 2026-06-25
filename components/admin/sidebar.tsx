@@ -20,7 +20,22 @@ import {
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 
-const NAV = [
+// Explicit type so `exact` is uniformly an optional boolean across every
+// item — without it TS infers a union where only some union members have
+// the property, and destructuring `exact` fails to compile.
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+};
+
+type NavGroup = {
+  group: string;
+  items: NavItem[];
+};
+
+const NAV: NavGroup[] = [
   { group: "Overview", items: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   ]},
