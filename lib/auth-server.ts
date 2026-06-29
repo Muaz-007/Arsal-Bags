@@ -9,6 +9,8 @@ export interface SessionUser {
   name: string | null;
   email: string | null;
   role: "customer" | "admin";
+  /** Which sign-in provider issued this session — "google" or "credentials". */
+  provider: string;
 }
 
 /** Returns the current session user, or null. Server-only. */
@@ -21,6 +23,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     name: u.name ?? null,
     email: u.email ?? null,
     role: (u.role as "customer" | "admin") ?? "customer",
+    provider: u.provider ?? "credentials",
   };
 }
 

@@ -44,7 +44,7 @@ export function ContactForm() {
     } catch {
       push({
         title: "Couldn't send",
-        description: "Please try again or email hello@bagsart.dev directly.",
+        description: "Please try again or email bags.art.pk@gmail.com directly.",
         tone: "error",
       });
     } finally {

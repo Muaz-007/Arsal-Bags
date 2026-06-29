@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Support email</Label>
-            <Input defaultValue="hello@bagsart.dev" />
+            <Input defaultValue="bags.art.pk@gmail.com" />
           </div>
           <Button variant="gold" size="sm">
             Save

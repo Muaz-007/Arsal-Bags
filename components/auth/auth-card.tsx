@@ -571,7 +571,10 @@ function SocialButtons() {
   return (
     <button
       type="button"
-      onClick={() => signIn("google")}
+      // Send the user to the homepage after Google completes; default
+      // would bounce them back to /auth/signup which is the wrong place
+      // once they're already signed in.
+      onClick={() => signIn("google", { callbackUrl: "/" })}
       className="inline-flex w-full items-center justify-center gap-2 h-11 rounded-xl border border-border bg-background text-sm hover:bg-muted transition active:scale-[0.97]"
     >
       <GoogleIcon className="h-4 w-4" />

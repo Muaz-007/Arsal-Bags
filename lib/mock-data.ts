@@ -406,7 +406,7 @@ export const USERS: AppUser[] = [
   {
     id: "u_admin",
     name: "BagsArt Admin",
-    email: "admin@bagsart.dev",
+    email: "bags.art.pk@gmail.com",
     role: "admin",
     createdAt: "2026-01-01T00:00:00.000Z",
     ordersCount: 0,

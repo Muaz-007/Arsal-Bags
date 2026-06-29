@@ -26,7 +26,7 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
           <div>
             <p className="font-medium">Cancelled</p>
             <p className="text-xs text-muted-foreground">
-              If you didn't request this, get in touch at hello@bagsart.dev.
+              If you didn't request this, get in touch at bags.art.pk@gmail.com.
             </p>
           </div>
         </div>

@@ -24,7 +24,13 @@ import { cn } from "@/lib/utils";
 const img = (id: string, size = 200) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${size}&q=70`;
 
-const ITEMS = [
+export interface StripItem {
+  label: string;
+  href: string;
+  image: string;
+}
+
+const DEFAULT_ITEMS: StripItem[] = [
   { label: "Under $199", href: "/products?price=0-199", image: img("photo-1606513542745-97629752a13b") },
   { label: "Best Sellers", href: "/products?sort=popular", image: img("photo-1548036328-c9fa89d128fa") },
   { label: "Under $299", href: "/products?price=0-299", image: img("photo-1566150905458-1bf1fc113f0d") },
@@ -45,7 +51,10 @@ const ITEMS = [
 const MOUSE_RESUME_MS = 120;
 const TOUCH_RESUME_MS = 1000;
 
-export function CategoryStrip() {
+export function CategoryStrip({ items }: { items?: StripItem[] }) {
+  // Server may pass admin-curated tiles via the `items` prop. If absent or
+  // empty, fall back to the built-in defaults so the strip never goes blank.
+  const ITEMS = items && items.length > 0 ? items : DEFAULT_ITEMS;
   const loop = [...ITEMS, ...ITEMS];
   const [paused, setPaused] = useState(false);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -1,5 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import {
+  emailChangeTemplate,
   orderConfirmationTemplate,
   passwordResetTemplate,
   welcomeTemplate,
@@ -29,7 +30,7 @@ interface EmailPayload {
   replyTo?: string;
 }
 
-const FROM = process.env.EMAIL_FROM ?? "BagsArt <hello@bagsart.dev>";
+const FROM = process.env.EMAIL_FROM ?? "BagsArt <bags.art.pk@gmail.com>";
 
 let transporter: Transporter | null = null;
 let transporterTried = false;
@@ -127,6 +128,16 @@ export async function sendPasswordReset(to: string, link: string) {
   return sendEmail({
     to,
     subject: "Reset your BagsArt password",
+    html,
+    text,
+  });
+}
+
+export async function sendEmailChangeVerification(to: string, link: string) {
+  const { html, text } = emailChangeTemplate(link);
+  return sendEmail({
+    to,
+    subject: "Confirm your new BagsArt email",
     html,
     text,
   });

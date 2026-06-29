@@ -89,14 +89,14 @@ function shell({ preheader, title, bodyHtml }: ShellOptions): string {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;margin-top:24px;">
           <tr>
             <td align="center" style="padding:8px 16px;font-size:11px;color:${TEXT_MUTED};text-transform:uppercase;letter-spacing:1.6px;">
-              Atelier · Karachi
+              Atelier · Lahore
             </td>
           </tr>
           <tr>
             <td align="center" style="padding:0 16px 8px;font-size:12px;color:${TEXT_MUTED};">
               <a href="${BASE_URL}" style="color:${TEXT_MUTED};text-decoration:none;">bagsart.dev</a>
               &nbsp;·&nbsp;
-              <a href="mailto:hello@bagsart.dev" style="color:${TEXT_MUTED};text-decoration:none;">hello@bagsart.dev</a>
+              <a href="mailto:bags.art.pk@gmail.com" style="color:${TEXT_MUTED};text-decoration:none;">bags.art.pk@gmail.com</a>
               &nbsp;·&nbsp;
               <a href="${BASE_URL}/help/faq" style="color:${TEXT_MUTED};text-decoration:none;">help</a>
             </td>
@@ -256,6 +256,62 @@ Total: $${order.total.toFixed(2)}
 Track your order: ${BASE_URL}/dashboard/orders/${order.id}
 
 Need to change something? Reply to this email — as long as it hasn't shipped yet.
+
+— The BagsArt team`;
+
+  return { html, text };
+}
+
+/* ─── Email change verification ───────────────────────────────────────── */
+
+export function emailChangeTemplate(link: string): { html: string; text: string } {
+  const html = shell({
+    preheader: "Confirm your new BagsArt email address — link expires in 1 hour.",
+    title: "Confirm your new email",
+    bodyHtml: `
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Account security</p>
+      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
+        Confirm your new email.
+      </h1>
+      <p style="margin:0 0 14px;font-size:15px;color:${TEXT};">
+        Someone (hopefully you) asked to switch the BagsArt account email to this address.
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:${TEXT};">
+        Click the button below within <strong>one hour</strong> to confirm. Until you click, the account stays on the old email.
+      </p>
+
+      ${ctaButton(link, "Confirm new email")}
+
+      <p style="margin:24px 0 8px;font-size:13px;color:${TEXT_MUTED};">
+        If the button doesn't work, copy and paste this URL into your browser:
+      </p>
+      <p style="margin:0 0 14px;padding:10px 14px;background:#f9f6ef;border:1px solid ${BORDER};border-radius:8px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:${TEXT};word-break:break-all;">
+        ${escape(link)}
+      </p>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 0;background:#fff8eb;border-left:3px solid ${GOLD};border-radius:8px;">
+        <tr>
+          <td style="padding:14px 18px;font-size:13px;color:${TEXT};">
+            <strong style="color:${GOLD_DARK};">Wasn't you?</strong> You can safely ignore this email — nothing changes on the account.
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:20px 0 0;font-size:14px;color:${TEXT};">
+        — The BagsArt team
+      </p>
+    `,
+  });
+
+  const text = `Confirm your new BagsArt email
+
+Someone asked to switch the BagsArt account email to this address.
+
+If it was you, click the link below within one hour to confirm. Until you click, the account stays on the old email.
+
+${link}
+
+If it wasn't you, you can safely ignore this email.
 
 — The BagsArt team`;
 

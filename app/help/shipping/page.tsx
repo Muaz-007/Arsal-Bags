@@ -4,7 +4,7 @@ import { ProsePage, ProseSection } from "@/components/content/prose-page";
 export const metadata: Metadata = {
   title: "Shipping & returns",
   description:
-    "How we ship from our Karachi studio, lead times by region, and our 30-day return policy.",
+    "How we ship from our Lahore studio, lead times by region, and our 30-day return policy.",
 };
 
 export default function ShippingPage() {
@@ -12,7 +12,7 @@ export default function ShippingPage() {
     <ProsePage
       eyebrow="Help"
       title="Shipping & returns"
-      intro="Every piece is finished by hand and shipped from our Karachi atelier. Here's what to expect after you place an order."
+      intro="Every piece is finished by hand and shipped from our Lahore studio. Here's what to expect after you place an order."
     >
       <ProseSection id="lead-times" title="Lead times">
         <p>
@@ -57,10 +57,10 @@ export default function ShippingPage() {
         <p>
           Email{" "}
           <a
-            href="mailto:returns@bagsart.dev"
+            href="mailto:bags.art.pk@gmail.com"
             className="underline decoration-gold underline-offset-4"
           >
-            returns@bagsart.dev
+            bags.art.pk@gmail.com
           </a>{" "}
           with your order number to start a return. We'll send a prepaid label
           (domestic) or instructions (international).

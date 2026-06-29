@@ -122,42 +122,48 @@ export async function listProducts(
             ? { price: "desc" as const }
             : { createdAt: "desc" as const };
 
-    // For sale, fetch a wider window then post-filter on `compareAt > price`
-    // (MySQL can't easily express a row-level column compare via Prisma).
-    if (opts.saleOnly) {
-      const candidates = await prisma.product.findMany({
-        where,
-        orderBy,
-        take: 200,
-      });
-      const filtered = candidates
-        .map(mapDbProduct)
-        .filter((p) => p.compareAt && p.compareAt > p.price);
-      const total = filtered.length;
-      return {
-        products: filtered.slice((page - 1) * perPage, page * perPage),
-        total,
-        page,
-        perPage,
-      };
-    }
+    return tolerant(
+      async () => {
+        // For sale, fetch a wider window then post-filter on `compareAt > price`
+        // (Postgres can't easily express a row-level column compare via Prisma
+        // without raw SQL).
+        if (opts.saleOnly) {
+          const candidates = await prisma!.product.findMany({
+            where,
+            orderBy,
+            take: 200,
+          });
+          const filtered = candidates
+            .map(mapDbProduct)
+            .filter((p) => p.compareAt && p.compareAt > p.price);
+          const total = filtered.length;
+          return {
+            products: filtered.slice((page - 1) * perPage, page * perPage),
+            total,
+            page,
+            perPage,
+          };
+        }
 
-    const [items, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * perPage,
-        take: perPage,
-      }),
-      prisma.product.count({ where }),
-    ]);
+        const [items, total] = await Promise.all([
+          prisma!.product.findMany({
+            where,
+            orderBy,
+            skip: (page - 1) * perPage,
+            take: perPage,
+          }),
+          prisma!.product.count({ where }),
+        ]);
 
-    return {
-      products: items.map(mapDbProduct),
-      total,
-      page,
-      perPage,
-    };
+        return {
+          products: items.map(mapDbProduct),
+          total,
+          page,
+          perPage,
+        };
+      },
+      { products: [], total: 0, page, perPage }
+    );
   }
 
   // ── Mock fallback ─────────────────────────────────────────────────────────
@@ -237,24 +243,43 @@ export async function getProductById(id: string): Promise<Product | null> {
   return PRODUCTS.find((p) => p.id === id) ?? null;
 }
 
+/**
+ * Run a Prisma query, falling back to an empty list / null if the
+ * database is briefly unreachable (Neon auto-suspend cold start, transient
+ * network blip, etc.). Better to render an empty section than to 500 the
+ * whole homepage for one transient failure.
+ */
+async function tolerant<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.warn("[queries] DB query failed, returning fallback:", err);
+    return fallback;
+  }
+}
+
 export async function getFeaturedProducts(): Promise<Product[]> {
   if (prisma) {
-    const rows = await prisma.product.findMany({
-      where: { featured: true },
-      orderBy: { createdAt: "desc" },
-    });
-    return rows.map(mapDbProduct);
+    return tolerant(async () => {
+      const rows = await prisma!.product.findMany({
+        where: { featured: true },
+        orderBy: { createdAt: "desc" },
+      });
+      return rows.map(mapDbProduct);
+    }, []);
   }
   return PRODUCTS.filter((p) => p.featured);
 }
 
 export async function getBestSellers(limit = 10): Promise<Product[]> {
   if (prisma) {
-    const rows = await prisma.product.findMany({
-      orderBy: { reviewCount: "desc" },
-      take: limit,
-    });
-    return rows.map(mapDbProduct);
+    return tolerant(async () => {
+      const rows = await prisma!.product.findMany({
+        orderBy: { reviewCount: "desc" },
+        take: limit,
+      });
+      return rows.map(mapDbProduct);
+    }, []);
   }
   return PRODUCTS.slice()
     .sort((a, b) => b.reviewCount - a.reviewCount)
@@ -263,21 +288,23 @@ export async function getBestSellers(limit = 10): Promise<Product[]> {
 
 export async function getSaleProducts(limit = 10): Promise<Product[]> {
   if (prisma) {
-    // Prisma can't easily express a `compareAt > price` row-level filter on
-    // MySQL without raw SQL, so we fetch the candidates and post-filter.
-    const rows = await prisma.product.findMany({
-      where: { compareAt: { not: null } },
-      take: 80,
-    });
-    return rows
-      .map(mapDbProduct)
-      .filter((p) => p.compareAt && p.compareAt > p.price)
-      .sort((a, b) => {
-        const da = (b.compareAt! - b.price) / b.compareAt!;
-        const db = (a.compareAt! - a.price) / a.compareAt!;
-        return da - db;
-      })
-      .slice(0, limit);
+    return tolerant(async () => {
+      // Prisma can't easily express a `compareAt > price` row-level filter
+      // without raw SQL, so we fetch the candidates and post-filter.
+      const rows = await prisma!.product.findMany({
+        where: { compareAt: { not: null } },
+        take: 80,
+      });
+      return rows
+        .map(mapDbProduct)
+        .filter((p) => p.compareAt && p.compareAt > p.price)
+        .sort((a, b) => {
+          const da = (b.compareAt! - b.price) / b.compareAt!;
+          const db = (a.compareAt! - a.price) / a.compareAt!;
+          return da - db;
+        })
+        .slice(0, limit);
+    }, []);
   }
   return PRODUCTS.filter((p) => p.compareAt && p.compareAt > p.price)
     .sort((a, b) => {
@@ -427,12 +454,14 @@ export async function getStorefrontConfig<T = unknown>(
 export async function resolveProductsByIds(ids: string[]): Promise<Product[]> {
   if (ids.length === 0) return [];
   if (prisma) {
-    const rows = await prisma.product.findMany({
-      where: { id: { in: ids } },
-    });
-    // Preserve the admin-curated order.
-    const byId = new Map(rows.map((r) => [r.id, mapDbProduct(r)]));
-    return ids.map((id) => byId.get(id)).filter(Boolean) as Product[];
+    return tolerant(async () => {
+      const rows = await prisma!.product.findMany({
+        where: { id: { in: ids } },
+      });
+      // Preserve the admin-curated order.
+      const byId = new Map(rows.map((r) => [r.id, mapDbProduct(r)]));
+      return ids.map((id) => byId.get(id)).filter(Boolean) as Product[];
+    }, []);
   }
   return PRODUCTS.filter((p) => ids.includes(p.id));
 }

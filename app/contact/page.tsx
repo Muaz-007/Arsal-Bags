@@ -11,21 +11,21 @@ const CHANNELS = [
   {
     icon: Mail,
     label: "Email",
-    value: "hello@bagsart.dev",
-    href: "mailto:hello@bagsart.dev",
+    value: "bags.art.pk@gmail.com",
+    href: "mailto:bags.art.pk@gmail.com",
     note: "We reply within one business day.",
   },
   {
     icon: Phone,
     label: "WhatsApp",
-    value: "+92 21 1234 5678",
-    href: "https://wa.me/922112345678",
+    value: "+92 42 1234 5678",
+    href: "https://wa.me/924212345678",
     note: "Mon–Sat · 10am–6pm PKT",
   },
   {
     icon: MapPin,
     label: "Atelier",
-    value: "Karachi, Pakistan",
+    value: "Lahore, Pakistan",
     href: "#",
     note: "By appointment only.",
   },
@@ -73,12 +73,12 @@ export default function ContactPage() {
             <Send className="h-4 w-4 text-gold mb-2" />
             <p className="text-sm font-medium">Press &amp; collaborations</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Reach our press team at{" "}
+              Reach us at{" "}
               <a
-                href="mailto:press@bagsart.dev"
+                href="mailto:bags.art.pk@gmail.com"
                 className="underline decoration-gold underline-offset-4"
               >
-                press@bagsart.dev
+                bags.art.pk@gmail.com
               </a>
               .
             </p>

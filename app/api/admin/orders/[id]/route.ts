@@ -3,19 +3,27 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
 
-const Schema = z.object({
-  status: z.enum([
-    "pending",
-    "paid",
-    "fulfilled",
-    "shipped",
-    "delivered",
-    "cancelled",
-  ]),
-});
+const Schema = z
+  .object({
+    status: z
+      .enum([
+        "pending",
+        "paid",
+        "fulfilled",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ])
+      .optional(),
+    trackingNumber: z.string().max(80).nullable().optional(),
+    trackingUrl: z.string().max(500).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "No changes" });
 
 /**
- * PATCH /api/admin/orders/[id] — admin-only order status update.
+ * PATCH /api/admin/orders/[id] — admin-only order update.
+ * Accepts status and/or tracking info. Empty strings on tracking fields are
+ * coerced to null so admins can clear them by submitting a blank field.
  */
 export async function PATCH(
   req: Request,
@@ -29,18 +37,37 @@ export async function PATCH(
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const update: Record<string, unknown> = {};
+  if (parsed.data.status !== undefined) update.status = parsed.data.status;
+  if (parsed.data.trackingNumber !== undefined) {
+    update.trackingNumber =
+      parsed.data.trackingNumber === "" ? null : parsed.data.trackingNumber;
+  }
+  if (parsed.data.trackingUrl !== undefined) {
+    update.trackingUrl =
+      parsed.data.trackingUrl === "" ? null : parsed.data.trackingUrl;
   }
 
   if (!prisma) {
-    // Mock mode
-    return NextResponse.json({ ok: true, id: params.id, status: parsed.data.status });
+    return NextResponse.json({ ok: true, id: params.id, ...update });
   }
 
-  const updated = await prisma.order.update({
-    where: { id: params.id },
-    data: { status: parsed.data.status },
-    select: { id: true, status: true },
-  });
-  return NextResponse.json({ ok: true, ...updated });
+  try {
+    const updated = await prisma.order.update({
+      where: { id: params.id },
+      data: update,
+      select: {
+        id: true,
+        status: true,
+        trackingNumber: true,
+        trackingUrl: true,
+      },
+    });
+    return NextResponse.json({ ok: true, ...updated });
+  } catch {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
 }

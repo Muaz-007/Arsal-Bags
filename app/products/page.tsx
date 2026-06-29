@@ -86,8 +86,8 @@ export default async function ProductsPage({
         </h1>
         <p className="mt-3 text-sm sm:text-base text-muted-foreground">
           {saleOnly
-            ? "Selected pieces, up to 25% off. Shipping from our Karachi studio within 48 hours."
-            : "Filter by silhouette, price, or availability. Each piece ships from our Karachi studio within 48 hours."}
+            ? "Selected pieces, up to 25% off. Shipping from our Lahore studio within 48 hours."
+            : "Filter by silhouette, price, or availability. Each piece ships from our Lahore studio within 48 hours."}
         </p>
       </header>
 

@@ -169,6 +169,10 @@ model Order {
   total          Decimal     @db.Decimal(10, 2)
   status         OrderStatus @default(pending)
   paymentRef     String?
+  // Courier tracking — admin pastes whatever the courier gave them. We
+  // store the URL too so customers can click-through to TCS/Leopards/etc.
+  trackingNumber String?
+  trackingUrl    String?
 
   user           User?       @relation(fields: [userId], references: [id])
   items          OrderItem[]
@@ -203,6 +207,20 @@ model Coupon {
   uses      Int        @default(0)
 
   createdAt DateTime   @default(now())
+}
+
+// One-time tokens used to confirm an email-address change. We send the
+// verification link to the NEW email so we know the user controls it
+// before swapping over.
+model EmailChangeToken {
+  token     String   @id
+  userId    String
+  newEmail  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Subscriber {

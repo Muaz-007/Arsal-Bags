@@ -37,7 +37,7 @@ npm run dev
 ```
 
 Open <http://localhost:3000>. Browse, fill the cart, hit /checkout, and even
-log in to the admin (`admin@bagsart.dev` / `admin12345`). Orders won't
+log in to the admin (`bags.art.pk@gmail.com` / `admin12345`). Orders won't
 persist, but the full UI works.
 
 ---
@@ -107,7 +107,7 @@ orders, users, wishlist, admin stats, the lot.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | `admin@bagsart.dev` | `admin12345` |
+| Admin | `bags.art.pk@gmail.com` | `admin12345` |
 
 The login form is pre-filled. Admins land on `/admin`; customers land on
 `/` (the store).

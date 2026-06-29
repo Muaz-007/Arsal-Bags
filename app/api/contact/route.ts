@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const { name, email, subject, message } = parsed.data;
 
   await sendEmail({
-    to: "hello@bagsart.dev",
+    to: "bags.art.pk@gmail.com",
     replyTo: email,
     subject: `[Contact · ${subject}] ${name}`,
     text: `From: ${name} <${email}>\nSubject: ${subject}\n\n${message}`,

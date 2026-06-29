@@ -13,7 +13,7 @@ import { PRODUCTS, COUPONS, USERS } from "../lib/mock-data";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@bagsart.dev";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "bags.art.pk@gmail.com";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
   const passwordHash = await bcrypt.hash(adminPassword, 10);
 

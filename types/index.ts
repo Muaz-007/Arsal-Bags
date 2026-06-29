@@ -66,6 +66,8 @@ export interface Order {
   tax: number;
   total: number;
   status: OrderStatus;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
   createdAt: string;
 }
 

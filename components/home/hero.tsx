@@ -1,18 +1,47 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HeroCarousel } from "@/components/home/hero-carousel";
+import { HeroCarousel, type Slide } from "@/components/home/hero-carousel";
+import { Reveal } from "@/components/ui/reveal";
+import { getStorefrontConfig } from "@/lib/queries";
 
 /**
- * Hero
- *
- * Mobile-first: the image area is a soft-fading carousel that auto-rotates
- * through a few curated products, each with its own caption.
+ * Hero (server component) — fetches the admin-curated carousel slides from
+ * `StorefrontConfig` and forwards them to the client `HeroCarousel`. When no
+ * config exists yet (fresh deploy), the carousel falls back to its built-in
+ * defaults so the homepage always renders.
  */
 
-export function Hero() {
+interface AdminSlide {
+  id: string;
+  title: string;
+  subtitle?: string;
+  image?: string;
+  href?: string;
+  visible: boolean;
+}
+
+function adminSlidesToCarousel(items: AdminSlide[] | null): Slide[] | undefined {
+  if (!items?.length) return undefined;
+  const visible = items.filter(
+    (s) => s.visible !== false && s.image && s.title
+  );
+  if (visible.length === 0) return undefined;
+
+  return visible.map((s) => ({
+    href: s.href || "/products",
+    src: s.image || "",
+    alt: s.title,
+    tag: s.subtitle ?? "",
+    name: s.title,
+    price: "",
+    tagline: "",
+  }));
+}
+
+export async function Hero() {
+  const raw = await getStorefrontConfig<AdminSlide[]>("hero");
+  const slides = adminSlidesToCarousel(raw);
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/50" />
@@ -22,12 +51,7 @@ export function Hero() {
       />
 
       <div className="container relative grid lg:grid-cols-2 gap-12 items-center pt-6 pb-24 lg:pt-10 lg:pb-28">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="relative z-10"
-        >
+        <Reveal y={16}>
           <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <span className="h-px w-8 bg-gold" />
             New · Summer Atelier 2026
@@ -63,15 +87,11 @@ export function Hero() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <HeroCarousel />
-        </motion.div>
+        <Reveal y={12} delay={0.1}>
+          <HeroCarousel slides={slides} />
+        </Reveal>
       </div>
     </section>
   );

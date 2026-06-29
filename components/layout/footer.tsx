@@ -53,23 +53,23 @@ export function Footer() {
               BagsArt
             </div>
             <p className="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">
-              Quietly designed leather goods, built by hand in a small atelier
-              in Florence — and finished in Karachi.
+              Quietly designed leather goods, built by hand in a small studio
+              in Lahore.
             </p>
 
             <ul className="mt-5 space-y-2 text-sm">
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-3.5 w-3.5" />
                 <a
-                  href="mailto:hello@bagsart.dev"
+                  href="mailto:bags.art.pk@gmail.com"
                   className="hover:text-foreground transition"
                 >
-                  hello@bagsart.dev
+                  bags.art.pk@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5" />
-                <span>Karachi · Florence</span>
+                <span>Lahore, Pakistan</span>
               </li>
             </ul>
 

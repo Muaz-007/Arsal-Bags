@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Plus, Edit, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,12 +74,23 @@ export default async function AdminProductsPage() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="inline-flex gap-1">
-                      <Button size="icon" variant="ghost" aria-label="Edit">
+                      <Link
+                        href={`/products/${p.slug}`}
+                        target="_blank"
+                        aria-label="View live"
+                        title="View on store"
+                        className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted text-muted-foreground transition"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                      <Link
+                        href={`/admin/products/${p.id}/edit`}
+                        aria-label="Edit"
+                        title="Edit product"
+                        className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted text-muted-foreground transition"
+                      >
                         <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" aria-label="Delete">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      </Link>
                     </div>
                   </td>
                 </tr>

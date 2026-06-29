@@ -106,7 +106,7 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       // ── Mock mode (no DATABASE_URL) ────────────────────────────────────
-      const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@bagsart.dev").toLowerCase();
+      const adminEmail = (process.env.ADMIN_EMAIL ?? "bags.art.pk@gmail.com").toLowerCase();
       const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
       if (email === adminEmail && password === adminPassword) {
         const admin = USERS.find((u) => u.email === adminEmail);
@@ -145,17 +145,52 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: { signIn: "/auth/login", error: "/auth/login" },
   callbacks: {
-    async jwt({ token, user }) {
+    // On Google sign-in, upsert a real User row in our DB so the user has
+    // a stable `id` we can foreign-key to from orders, wishlist, etc. We
+    // overwrite the in-memory `user.id` with our DB id so the JWT below
+    // stores the same value.
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && prisma) {
+        const email = user.email?.toLowerCase().trim();
+        if (!email) return false;
+
+        const dbUser = await prisma.user.upsert({
+          where: { email },
+          update: { name: user.name ?? undefined },
+          create: {
+            email,
+            name: user.name ?? email.split("@")[0],
+            role: "customer",
+            // passwordHash stays null — the profile page uses this to
+            // identify Google-only users and lock the email field.
+          },
+        });
+
+        user.id = dbUser.id;
+        (user as any).role = dbUser.role;
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role ?? "customer";
       }
+      // `account` only exists on the first sign-in. Persist the provider
+      // into the token so it survives subsequent requests.
+      if (account?.provider) {
+        token.provider = account.provider;
+      }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).provider =
+          (token as { provider?: string }).provider ?? "credentials";
       }
       return session;
     },

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * hero image.
  */
 
-interface Slide {
+export interface Slide {
   href: string;
   src: string;
   alt: string;
@@ -24,7 +24,7 @@ interface Slide {
   tagline: string;
 }
 
-const SLIDES: Slide[] = [
+const DEFAULT_SLIDES: Slide[] = [
   {
     href: "/products/florence-tote-cognac",
     src: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=70",
@@ -65,7 +65,10 @@ const SLIDES: Slide[] = [
 
 const ROTATION_MS = 4500;
 
-export function HeroCarousel() {
+export function HeroCarousel({ slides }: { slides?: Slide[] }) {
+  // Server may pass admin-curated slides; if absent or empty, fall back to
+  // the in-code defaults so the homepage always has something to show.
+  const SLIDES = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 

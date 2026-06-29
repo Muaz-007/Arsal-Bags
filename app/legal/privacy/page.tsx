@@ -63,10 +63,10 @@ export default function PrivacyPage() {
           </a>
           , or email{" "}
           <a
-            href="mailto:privacy@bagsart.dev"
+            href="mailto:bags.art.pk@gmail.com"
             className="underline decoration-gold underline-offset-4"
           >
-            privacy@bagsart.dev
+            bags.art.pk@gmail.com
           </a>
           .
         </p>
@@ -74,8 +74,8 @@ export default function PrivacyPage() {
 
       <ProseSection id="contact" title="Contact">
         <p>
-          BagsArt Atelier · Karachi, Pakistan · hello@bagsart.dev. Our
-          data-protection contact is reachable at privacy@bagsart.dev.
+          BagsArt Atelier · Lahore, Pakistan · bags.art.pk@gmail.com.
+          For data-protection requests, use the same address.
         </p>
       </ProseSection>
     </ProsePage>
