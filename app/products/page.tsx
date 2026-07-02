@@ -10,8 +10,18 @@ import { Pagination } from "@/components/product/pagination";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Shop",
-  description: "Browse the full BagsArt catalogue of leather bags and accessories.",
+  title: "Shop leather bags",
+  description:
+    "Browse the full BagsArt catalogue — totes, backpacks, clutches, crossbody, and small leather goods. Hand-stitched, shipped from Lahore.",
+  // Filter and sort params (?category=tote, ?sort=price-asc, etc.) all render
+  // the same catalogue view — canonicalise them back to /products so Google
+  // doesn't dilute the ranking across dozens of URL variants.
+  alternates: { canonical: "/products" },
+  openGraph: {
+    title: "Shop leather bags · BagsArt",
+    description:
+      "Totes, backpacks, clutches, crossbody bags, and wallets — hand-stitched in Lahore.",
+  },
 };
 
 function parsePrice(value: string | null) {

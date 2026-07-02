@@ -9,6 +9,7 @@ import { WishlistClient } from "@/components/dashboard/wishlist-client";
 export const metadata = {
   title: "Wishlist",
   description: "Pieces you've saved at BagsArt. Sign in to sync your wishlist across devices.",
+  robots: { index: false, follow: false },
 };
 
 /**

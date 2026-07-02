@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { ReactNode } from "react";
+
+// The whole /dashboard tree is user-specific — never index.
+export const metadata: Metadata = {
+  title: "Account",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Customer account layout.

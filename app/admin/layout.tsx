@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 
-export const metadata = {
+// Admin never indexed — defence in depth alongside robots.ts disallow.
+export const metadata: Metadata = {
   title: "Admin · BagsArt",
+  robots: { index: false, follow: false },
 };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Rating } from "@/components/ui/rating";
 import { formatPrice } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/section";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -17,10 +18,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
   if (!product) return { title: "Product not found" };
+  const url = `${SITE_URL}/products/${product.slug}`;
   return {
     title: product.name,
     description: product.tagline,
+    alternates: { canonical: url },
     openGraph: {
+      title: product.name,
+      description: product.tagline,
+      url,
+      type: "website",
+      siteName: SITE_NAME,
+      images: product.images.map((src) => ({
+        url: src,
+        alt: product.name,
+      })),
+    },
+    twitter: {
+      card: "summary_large_image",
       title: product.name,
       description: product.tagline,
       images: [product.images[0]],
@@ -39,15 +54,17 @@ export default async function ProductDetailPage({
   const related = await getRelatedProducts(params.slug);
   const onSale = product.compareAt && product.compareAt > product.price;
 
+  const productUrl = `${SITE_URL}/products/${product.slug}`;
+
   // Product schema.org JSON-LD for rich Google results
-  const jsonLd = {
+  const productJsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     name: product.name,
     description: product.description,
     image: product.images,
     sku: product.id,
-    brand: { "@type": "Brand", name: "BagsArt" },
+    brand: { "@type": "Brand", name: SITE_NAME },
     aggregateRating:
       product.reviewCount > 0
         ? {
@@ -58,14 +75,42 @@ export default async function ProductDetailPage({
         : undefined,
     offers: {
       "@type": "Offer",
-      url: `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/products/${product.slug}`,
+      url: productUrl,
       priceCurrency: product.currency,
       price: product.price,
       availability:
         product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
     },
+  };
+
+  // Breadcrumb JSON-LD helps Google show a breadcrumb trail in search results
+  // instead of the raw URL.
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Shop",
+        item: `${SITE_URL}/products`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: product.category,
+        item: `${SITE_URL}/products?category=${product.category}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: productUrl,
+      },
+    ],
   };
 
   return (
@@ -76,7 +121,13 @@ export default async function ProductDetailPage({
         // out of the script tag. Defense-in-depth even though only admins
         // can write product names.
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
       />
       <article className="container py-12 lg:py-16">

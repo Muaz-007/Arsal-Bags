@@ -9,6 +9,7 @@ import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { WishlistFab } from "@/components/layout/wishlist-fab";
 import { WishlistSync } from "@/components/layout/wishlist-sync";
 import { ToastViewport } from "@/components/ui/toast";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,21 +24,84 @@ const display = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "BagsArt — Crafted Bags, Reimagined",
-    template: "%s · BagsArt",
+    default: `${SITE_NAME} — Crafted Bags, Reimagined`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "BagsArt is a premium leather atelier crafting bags, totes, and accessories with an obsessive focus on detail.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_NAME }],
+  keywords: [
+    "leather bags",
+    "handmade bags",
+    "tote",
+    "backpack",
+    "leather goods",
+    "Lahore",
+    "BagsArt",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "BagsArt — Crafted Bags, Reimagined",
-    description:
-      "Premium leather goods, designed in studio and built to last.",
+    title: `${SITE_NAME} — Crafted Bags, Reimagined`,
+    description: SITE_DESCRIPTION,
     type: "website",
-    siteName: "BagsArt",
+    siteName: SITE_NAME,
+    url: SITE_URL,
+    locale: "en_US",
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — Crafted Bags, Reimagined`,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.png`,
+  description: SITE_DESCRIPTION,
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Lahore",
+    addressCountry: "PK",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: "bags.art.pk@gmail.com",
+    contactType: "customer support",
+    areaServed: "Worldwide",
+  },
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL}/products?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
 };
 
 export default function RootLayout({
@@ -57,6 +121,21 @@ export default function RootLayout({
             cheaper fallback for browsers that ignore preconnect. */}
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+        {/* Site-wide structured data — helps Google build the brand knowledge
+            panel and enables sitelinks search box in the SERP. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
       </head>
       <body className="min-h-screen flex flex-col">
         <Providers>

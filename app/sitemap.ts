@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { listProducts } from "@/lib/queries";
+import { SITE_URL } from "@/lib/site";
 
-const BASE = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+const BASE = SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { products } = await listProducts({ perPage: 1000 });

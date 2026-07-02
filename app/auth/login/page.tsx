@@ -6,6 +6,7 @@ import { AuthCard } from "@/components/auth/auth-card";
 export const metadata: Metadata = {
   title: "Sign in",
   description: "Sign in to your BagsArt account.",
+  robots: { index: false, follow: false },
 };
 
 export default async function LoginPage() {
