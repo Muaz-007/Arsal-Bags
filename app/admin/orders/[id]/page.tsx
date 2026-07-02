@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard } from "lucide-react";
 import { requireAdmin } from "@/lib/auth-server";
 import { getOrderById } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
@@ -118,6 +118,38 @@ export default async function AdminOrderDetailPage({
               <p className="text-xs text-muted-foreground">
                 {order.customerEmail}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">
+                Payment
+              </p>
+              <div className="inline-flex items-center gap-2 text-sm">
+                {order.paymentMethod === "cod" ? (
+                  <>
+                    <Banknote className="h-4 w-4 text-gold" />
+                    <span>Cash on delivery</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    <span>Card</span>
+                  </>
+                )}
+                <span className="text-xs text-muted-foreground ml-1">
+                  · {order.status === "paid" || order.status === "delivered"
+                    ? "settled"
+                    : "unsettled"}
+                </span>
+              </div>
+              {order.paymentMethod === "cod" && order.status !== "paid" && order.status !== "delivered" && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Mark the order as <em>paid</em> from the status field below once
+                  the courier confirms delivery + collection.
+                </p>
+              )}
             </CardContent>
           </Card>
 

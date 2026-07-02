@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Banknote, CreditCard, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useCart } from "@/store/cart";
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const [selected, setSelected] = useState<SavedAddress | null>(null);
   const [newMode, setNewMode] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("cod");
 
   function pickSaved(a: SavedAddress) {
     setSelected(a);
@@ -71,6 +73,7 @@ export default function CheckoutPage() {
       customer: address,
       items: lines,
       couponCode: coupon?.code,
+      paymentMethod,
     };
 
     try {
@@ -105,7 +108,7 @@ export default function CheckoutPage() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Please try again.";
-      push({ title: "Payment failed", description: message, tone: "error" });
+      push({ title: "Couldn't place order", description: message, tone: "error" });
     } finally {
       setLoading(false);
     }
@@ -225,14 +228,44 @@ export default function CheckoutPage() {
           <legend className="font-display text-lg mb-1 flex items-center gap-2">
             Payment <Lock className="h-4 w-4 text-muted-foreground" />
           </legend>
-          <div className="rounded-xl border border-border bg-muted/40 p-5">
-            <p className="text-sm text-muted-foreground">
-              Stripe is wired up via{" "}
-              <code className="font-mono">/api/checkout</code>. With test keys
-              configured in <code className="font-mono">.env</code>, this form
-              redirects to Stripe Checkout. Without keys, an order is recorded
-              in mock mode and you'll be sent to the confirmation page.
-            </p>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("cod")}
+              className={cn(
+                "text-left rounded-xl border p-4 transition",
+                paymentMethod === "cod"
+                  ? "border-gold ring-1 ring-gold bg-gold/5"
+                  : "border-border hover:border-foreground/30"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Banknote className="h-4 w-4 text-gold" />
+                <span className="font-medium text-sm">Cash on delivery</span>
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Pay the courier when your order arrives.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              disabled
+              aria-disabled
+              className="text-left rounded-xl border border-dashed border-border p-4 opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center gap-2.5">
+                <CreditCard className="h-4 w-4" />
+                <span className="font-medium text-sm">Card</span>
+                <span className="ml-auto text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Soon
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Online payment is coming shortly.
+              </p>
+            </button>
           </div>
         </fieldset>
 
@@ -243,7 +276,7 @@ export default function CheckoutPage() {
           className="w-full"
           loading={loading}
         >
-          Pay {formatPrice(total)}
+          Place order · {formatPrice(total)}
         </Button>
       </motion.form>
 

@@ -30,6 +30,11 @@ enum CouponType {
   fixed
 }
 
+enum PaymentMethod {
+  card
+  cod
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -167,7 +172,8 @@ model Order {
   shipping       Decimal     @db.Decimal(10, 2) @default(0)
   tax            Decimal     @db.Decimal(10, 2) @default(0)
   total          Decimal     @db.Decimal(10, 2)
-  status         OrderStatus @default(pending)
+  status         OrderStatus   @default(pending)
+  paymentMethod  PaymentMethod @default(cod)
   paymentRef     String?
   // Courier tracking — admin pastes whatever the courier gave them. We
   // store the URL too so customers can click-through to TCS/Leopards/etc.

@@ -70,6 +70,9 @@ function mapDbOrder(o: any): Order {
     tax: D(o.tax),
     total: D(o.total),
     status: o.status as OrderStatus,
+    paymentMethod: (o.paymentMethod ?? "cod") as "cod" | "card",
+    trackingNumber: o.trackingNumber ?? null,
+    trackingUrl: o.trackingUrl ?? null,
     createdAt:
       o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt),
   };

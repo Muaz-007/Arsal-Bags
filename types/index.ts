@@ -55,6 +55,8 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export type PaymentMethod = "card" | "cod";
+
 export interface Order {
   id: string;
   userId: string;
@@ -66,6 +68,7 @@ export interface Order {
   tax: number;
   total: number;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
   trackingNumber?: string | null;
   trackingUrl?: string | null;
   createdAt: string;

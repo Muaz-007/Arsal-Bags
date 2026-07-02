@@ -26,6 +26,7 @@ const Schema = z.object({
   }),
   items: z.array(LineSchema).min(1),
   couponCode: z.string().max(40).optional(),
+  paymentMethod: z.enum(["card", "cod"]).default("cod"),
 });
 
 // Same rules used on the cart store — kept in sync intentionally.
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid order" }, { status: 400 });
   }
-  const { customer, items, couponCode } = parsed.data;
+  const { customer, items, couponCode, paymentMethod } = parsed.data;
 
   // ── Server-side totals: never trust the client's numbers ─────────────────
   const subtotal = round2(items.reduce((a, i) => a + i.price * i.quantity, 0));
@@ -81,9 +82,10 @@ export async function POST(req: Request) {
   const total = round2(Math.max(0, afterDiscount + shipping + tax));
 
   // ── Optional Stripe Checkout session ─────────────────────────────────────
+  // Skip Stripe entirely for COD orders — customer pays courier on delivery.
   let paymentRef: string | undefined;
 
-  if (stripe) {
+  if (paymentMethod === "card" && stripe) {
     try {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -106,54 +108,82 @@ export async function POST(req: Request) {
     }
   }
 
-  // Attach the order to the signed-in user when there is one — so it shows
-  // up in /dashboard/orders. Guests get a session-less order.
   const me = await getCurrentUser();
 
   let id: string;
   if (prisma) {
-    // Alias to a non-null local so the type narrows inside closures below.
     const db = prisma;
-    const order = await db.order.create({
-      data: {
-        userId: me?.id,
-        customerName: customer.name,
-        customerEmail: customer.email,
-        subtotal,
-        shipping,
-        tax,
-        total,
-        status: paymentRef ? "paid" : "pending",
-        paymentRef,
-        items: {
-          create: items.map((i) => ({
-            productId: i.productId,
-            name: i.name,
-            image: i.image,
-            color: i.color,
-            price: i.price,
-            quantity: i.quantity,
-          })),
-        },
-      },
-      select: { id: true },
-    });
-    id = order.id;
+    try {
+      const order = await db.$transaction(async (tx) => {
+        // Load stock for every purchased product inside the transaction so
+        // concurrent orders can't race past each other and oversell. If any
+        // item is short, we throw and Prisma rolls the whole thing back.
+        const productIds = items.map((i) => i.productId);
+        const products = await tx.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, name: true, stock: true },
+        });
+        const stockMap = new Map(products.map((p) => [p.id, p]));
 
-    // Decrement stock for each purchased product. Best-effort — wrap in a
-    // try so a missing product (e.g. mock IDs) doesn't blow up the order.
-    await Promise.all(
-      items.map((i) =>
-        db.product
-          .update({
-            where: { id: i.productId },
-            data: { stock: { decrement: i.quantity } },
-          })
-          .catch(() => null)
-      )
-    );
+        for (const line of items) {
+          const p = stockMap.get(line.productId);
+          if (!p) {
+            throw new Error(`"${line.name}" is no longer available.`);
+          }
+          if (p.stock < line.quantity) {
+            throw new Error(
+              p.stock === 0
+                ? `"${p.name}" is sold out.`
+                : `Only ${p.stock} left of "${p.name}" — please reduce the quantity.`
+            );
+          }
+        }
 
-    // Increment the coupon's `uses` counter so admins can track redemption.
+        const created = await tx.order.create({
+          data: {
+            userId: me?.id,
+            customerName: customer.name,
+            customerEmail: customer.email,
+            subtotal,
+            shipping,
+            tax,
+            total,
+            status: paymentRef ? "paid" : "pending",
+            paymentMethod,
+            paymentRef,
+            items: {
+              create: items.map((i) => ({
+                productId: i.productId,
+                name: i.name,
+                image: i.image,
+                color: i.color,
+                price: i.price,
+                quantity: i.quantity,
+              })),
+            },
+          },
+          select: { id: true },
+        });
+
+        // Decrement stock atomically — the checks above guarantee no product
+        // drops below zero within this transaction.
+        for (const line of items) {
+          await tx.product.update({
+            where: { id: line.productId },
+            data: { stock: { decrement: line.quantity } },
+          });
+        }
+
+        return created;
+      });
+      id = order.id;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong placing the order.";
+      return NextResponse.json({ error: message }, { status: 409 });
+    }
+
+    // Coupon uses is outside the transaction — best-effort, non-blocking.
     if (coupon) {
       await db.coupon
         .update({
@@ -177,6 +207,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     id,
     paymentRef,
+    paymentMethod,
     totals: { subtotal, discount, shipping, tax, total },
   });
 }

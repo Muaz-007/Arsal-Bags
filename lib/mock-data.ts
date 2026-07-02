@@ -346,6 +346,7 @@ export const ORDERS: Order[] = [
     tax: 38.4,
     total: 518.4,
     status: "shipped",
+    paymentMethod: "cod",
     createdAt: "2026-06-12T10:00:00.000Z",
   },
   {
@@ -376,6 +377,7 @@ export const ORDERS: Order[] = [
     tax: 68.8,
     total: 928.8,
     status: "paid",
+    paymentMethod: "card",
     createdAt: "2026-06-18T10:00:00.000Z",
   },
   {
@@ -398,6 +400,7 @@ export const ORDERS: Order[] = [
     tax: 57.6,
     total: 792.6,
     status: "pending",
+    paymentMethod: "cod",
     createdAt: "2026-06-22T10:00:00.000Z",
   },
 ];

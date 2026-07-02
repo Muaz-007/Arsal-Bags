@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Truck } from "lucide-react";
+import { Banknote, ChevronRight, CreditCard, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { listOrders } from "@/lib/queries";
@@ -32,6 +32,7 @@ export default async function AdminOrdersPage() {
                   <th className="text-left px-5 py-3">Items</th>
                   <th className="text-left px-5 py-3">Date</th>
                   <th className="text-left px-5 py-3">Status</th>
+                  <th className="text-left px-5 py-3">Payment</th>
                   <th className="text-left px-5 py-3">Tracking</th>
                   <th className="text-right px-5 py-3">Total</th>
                   <th className="w-8" />
@@ -74,6 +75,19 @@ export default async function AdminOrdersPage() {
                       >
                         {o.status}
                       </Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      {o.paymentMethod === "cod" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs">
+                          <Banknote className="h-3.5 w-3.5 text-gold" />
+                          COD
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          Card
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3">
                       {o.trackingNumber ? (
