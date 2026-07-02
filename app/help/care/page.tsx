@@ -24,7 +24,7 @@ export default function CarePage() {
         <p>
           Apply a thin coat of a neutral leather conditioner with a clean cloth.
           Buff lightly after 10 minutes. We use <em>Saphir Médaille d'Or</em> in
-          the atelier — most pH-neutral conditioners work as well.
+          the studio — most pH-neutral conditioners work as well.
         </p>
       </ProseSection>
 

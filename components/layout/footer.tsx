@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Instagram, Twitter, Youtube, Mail, MapPin } from "lucide-react";
+import { Facebook, Instagram, Mail, MapPin } from "lucide-react";
 import { FooterNewsletter } from "./footer-newsletter";
+
+const SOCIALS = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/bags_art_official/",
+    Icon: Instagram,
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/share/14gt9w5emgu/",
+    Icon: Facebook,
+  },
+];
 
 const sections = [
   {
@@ -12,16 +25,16 @@ const sections = [
       { href: "/products", label: "All products" },
       { href: "/products?category=tote", label: "Totes" },
       { href: "/products?category=backpack", label: "Backpacks" },
-      { href: "/products?collection=heritage", label: "Heritage" },
+      { href: "/products?collection=heritage", label: "New" },
     ],
   },
   {
-    title: "Atelier",
+    title: "About",
     links: [
       { href: "/about", label: "Our story" },
-      { href: "/about#craft", label: "Craft" },
+      { href: "/about#craft", label: "How we work" },
       { href: "/about#materials", label: "Materials" },
-      { href: "/about#sustainability", label: "Sustainability" },
+      { href: "/about#sustainability", label: "Built to last" },
     ],
   },
   {
@@ -75,11 +88,13 @@ export function Footer() {
             </ul>
 
             <div className="mt-6 flex gap-2.5">
-              {[Instagram, Twitter, Youtube].map((Icon, i) => (
+              {SOCIALS.map(({ label, href, Icon }) => (
                 <a
-                  key={i}
-                  href="#"
-                  aria-label="Social"
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
                   className="h-9 w-9 grid place-items-center rounded-full border border-border hover:bg-muted hover:border-foreground/30 transition"
                 >
                   <Icon className="h-4 w-4" />
@@ -89,7 +104,7 @@ export function Footer() {
 
             <div className="mt-8">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                The Atelier letter
+                Newsletter
               </p>
               <p className="mt-2 text-xs text-muted-foreground max-w-sm">
                 One quiet note a month when new pieces leave the studio.
@@ -126,7 +141,7 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="container py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <span>
-            © {new Date().getFullYear()} BagsArt Atelier. All rights reserved.
+            © {new Date().getFullYear()} BagsArt. All rights reserved.
           </span>
           <div className="flex gap-5">
             <Link href="/legal/privacy">Privacy</Link>

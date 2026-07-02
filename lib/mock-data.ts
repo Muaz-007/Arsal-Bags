@@ -309,17 +309,21 @@ PRODUCTS[0].reviews = [
   {
     id: "r1",
     author: "Mira K.",
+    userId: "u_001",
     rating: 5,
     title: "Worth every penny",
     body: "The stitching is precise and the leather smells incredible. Already wearing the patina I hoped for.",
+    images: [],
     createdAt: "2026-05-21T10:00:00.000Z",
   },
   {
     id: "r2",
     author: "Daniel R.",
+    userId: "u_002",
     rating: 4,
     title: "Beautiful, but heavy",
     body: "Build quality is exceptional. A touch heavy when fully loaded, but that is the price of leather this thick.",
+    images: [],
     createdAt: "2026-04-15T10:00:00.000Z",
   },
 ];

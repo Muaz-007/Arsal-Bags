@@ -30,7 +30,7 @@ export default async function CustomerHome() {
         </h1>
         <p className="mt-2 text-muted-foreground max-w-xl">
           Quick glance at your orders and saved pieces. Keep browsing the
-          atelier whenever you're ready.
+          store whenever you're ready.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button href="/products" variant="gold">

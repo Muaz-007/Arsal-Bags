@@ -96,7 +96,7 @@ export function AddToCart({ product }: { product: Product }) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Free worldwide shipping over $250 · Lifetime repair guarantee
+        Free shipping over $250 · Hand-stitched in Lahore
       </p>
     </div>
   );

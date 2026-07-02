@@ -17,7 +17,7 @@ const QA = [
   },
   {
     q: "How long will my bag last?",
-    a: "Well-kept full-grain leather typically lasts decades and looks better the older it gets. If a stitch fails or hardware wears out, we'll repair the bag for as long as you own it — you just cover the shipping.",
+    a: "Well-kept full-grain leather often ages beautifully — softening, deepening in color, and picking up a natural patina over years of use. Follow the care guide and it should stay a piece you actually want to keep carrying.",
   },
   {
     q: "Can I monogram a bag?",

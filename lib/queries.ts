@@ -104,10 +104,12 @@ export async function listProducts(
     if (opts.inStock) where.stock = { gt: 0 };
     if (opts.saleOnly) where.compareAt = { not: null };
     if (opts.search) {
+      // Postgres text `contains` is case-sensitive by default — insensitive
+      // mode lets "Tote" match "tote", "TOTE", etc.
       where.OR = [
-        { name: { contains: opts.search } },
-        { tagline: { contains: opts.search } },
-        { description: { contains: opts.search } },
+        { name: { contains: opts.search, mode: "insensitive" } },
+        { tagline: { contains: opts.search, mode: "insensitive" } },
+        { description: { contains: opts.search, mode: "insensitive" } },
       ];
     }
     if (opts.minPrice != null || opts.maxPrice != null) {
@@ -225,12 +227,33 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     });
     if (!p) return null;
     const product = mapDbProduct(p);
+    // Batch-fetch the set of users who have ever bought *this* product so
+    // we can mark their reviews as "Verified buyer" without an N+1.
+    const reviewerIds = ((p as any).reviews ?? [])
+      .map((r: any) => r.userId)
+      .filter(Boolean);
+    let verifiedIds = new Set<string>();
+    if (reviewerIds.length > 0) {
+      const orders = await prisma.order.findMany({
+        where: {
+          userId: { in: reviewerIds },
+          items: { some: { productId: p.id } },
+          status: { in: ["paid", "fulfilled", "shipped", "delivered"] },
+        },
+        select: { userId: true },
+      });
+      verifiedIds = new Set(orders.map((o) => o.userId).filter(Boolean) as string[]);
+    }
+
     product.reviews = (p as any).reviews?.map((r: any) => ({
       id: r.id,
       author: r.author,
       rating: r.rating,
       title: r.title,
       body: r.body,
+      images: Array.isArray(r.images) ? r.images : [],
+      userId: r.userId,
+      verified: verifiedIds.has(r.userId),
       createdAt: r.createdAt.toISOString(),
     }));
     return product;

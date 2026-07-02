@@ -58,8 +58,8 @@ export default function OGImage() {
               lineHeight: 1.35,
             }}
           >
-            Hand-stitched bags from a small studio in Lahore. Honest materials.
-            Lifetime repair.
+            Hand-stitched bags from a small studio in Lahore. Full-grain
+            leather. Made in small batches.
           </div>
         </div>
 
@@ -74,7 +74,7 @@ export default function OGImage() {
             textTransform: "uppercase",
           }}
         >
-          <span>Atelier · Lahore</span>
+          <span>Studio · Lahore</span>
           <span>bagsart</span>
         </div>
       </div>

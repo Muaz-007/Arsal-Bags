@@ -10,14 +10,35 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { ReviewPhotoPicker } from "@/components/product/review-photo-picker";
 import { cn } from "@/lib/utils";
 
-export function ReviewForm({ productId }: { productId: string }) {
+interface ExistingReview {
+  id: string;
+  rating: number;
+  title: string;
+  body: string;
+  images: string[];
+}
+
+export function ReviewForm({
+  productId,
+  existing,
+  onDone,
+  onCancel,
+}: {
+  productId: string;
+  existing?: ExistingReview;
+  onDone?: () => void;
+  onCancel?: () => void;
+}) {
   const { status } = useSession();
   const router = useRouter();
   const push = useToast((s) => s.push);
-  const [rating, setRating] = useState(0);
+  const isEdit = !!existing;
+  const [rating, setRating] = useState(existing?.rating ?? 0);
   const [hovered, setHovered] = useState(0);
+  const [images, setImages] = useState<string[]>(existing?.images ?? []);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -27,31 +48,47 @@ export function ReviewForm({ productId }: { productId: string }) {
       return;
     }
     const form = new FormData(e.currentTarget);
+    const payload = {
+      rating,
+      title: form.get("title"),
+      body: form.get("body"),
+      images,
+      ...(isEdit ? {} : { productId }),
+    };
+
     setLoading(true);
     try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
+      const url = isEdit ? `/api/reviews/${existing!.id}` : "/api/reviews";
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          rating,
-          title: form.get("title"),
-          body: form.get("body"),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        push({ title: "Couldn't post", description: data?.error, tone: "error" });
+        push({
+          title: isEdit ? "Couldn't update" : "Couldn't post",
+          description: data?.error,
+          tone: "error",
+        });
         return;
       }
       push({
-        title: "Review posted",
-        description: "Thanks for sharing — it'll help other customers.",
+        title: isEdit ? "Review updated" : "Review posted",
+        description: isEdit
+          ? "Your changes are live."
+          : "Thanks for sharing — it'll help other customers.",
         tone: "success",
       });
       router.refresh();
-      (e.target as HTMLFormElement).reset();
-      setRating(0);
+      if (isEdit) {
+        onDone?.();
+      } else {
+        (e.target as HTMLFormElement).reset();
+        setRating(0);
+        setImages([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -81,10 +118,9 @@ export function ReviewForm({ productId }: { productId: string }) {
     <Card>
       <CardContent className="p-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">
-          Write a review
+          {isEdit ? "Edit your review" : "Write a review"}
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
-          {/* Star picker */}
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((n) => {
               const on = (hovered || rating) >= n;
@@ -111,9 +147,7 @@ export function ReviewForm({ productId }: { productId: string }) {
               );
             })}
             <span className="ml-2 text-xs text-muted-foreground">
-              {rating > 0
-                ? `${rating} of 5`
-                : "Tap a star"}
+              {rating > 0 ? `${rating} of 5` : "Tap a star"}
             </span>
           </div>
 
@@ -123,6 +157,7 @@ export function ReviewForm({ productId }: { productId: string }) {
               name="title"
               required
               maxLength={120}
+              defaultValue={existing?.title ?? ""}
               placeholder="In one sentence — what did you love?"
             />
           </div>
@@ -134,17 +169,31 @@ export function ReviewForm({ productId }: { productId: string }) {
               minLength={8}
               maxLength={2000}
               rows={4}
+              defaultValue={existing?.body ?? ""}
               placeholder="Tell other customers about the leather, the size, daily use…"
             />
           </div>
-          <Button
-            type="submit"
-            variant="gold"
-            className="w-full"
-            loading={loading}
-          >
-            Post review
-          </Button>
+
+          <div className="space-y-1.5">
+            <Label>Photos (optional)</Label>
+            <ReviewPhotoPicker value={images} onChange={setImages} />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              variant="gold"
+              className="flex-1"
+              loading={loading}
+            >
+              {isEdit ? "Save changes" : "Post review"}
+            </Button>
+            {isEdit && onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

@@ -33,8 +33,8 @@ const NAV_LINKS = [
   { href: "/products", label: "Shop" },
   { href: "/products?category=tote", label: "Totes" },
   { href: "/products?category=backpack", label: "Backpacks" },
-  { href: "/products?collection=heritage", label: "Heritage" },
-  { href: "/about", label: "Atelier" },
+  { href: "/products?collection=heritage", label: "New" },
+  { href: "/about", label: "About us" },
 ];
 
 export function Navbar() {

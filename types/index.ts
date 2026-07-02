@@ -12,6 +12,13 @@ export interface ProductReview {
   rating: number;
   title: string;
   body: string;
+  images: string[];
+  // Present so the client can show edit/delete controls only on the
+  // signed-in user's own reviews without a second round-trip.
+  userId: string;
+  // Set server-side when the reviewer has a paid/shipped/delivered order
+  // containing this product.
+  verified?: boolean;
   createdAt: string;
 }
 

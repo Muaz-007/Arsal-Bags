@@ -21,4 +21,4 @@ export const SITE_URL = (() => {
 
 export const SITE_NAME = "BagsArt";
 export const SITE_DESCRIPTION =
-  "BagsArt is a small leather goods studio in Lahore. Hand-stitched bags, honest materials, lifetime repair.";
+  "BagsArt is a small leather goods studio in Lahore. Hand-stitched bags in full-grain leather — made in small batches.";

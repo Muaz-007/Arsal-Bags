@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Mail, MapPin, Phone, Send } from "lucide-react";
+import { Facebook, Instagram, Mail, MapPin, Send } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact us",
-  description: "Get in touch with the BagsArt atelier — orders, repairs, press, or to say hello.",
+  description: "Get in touch with BagsArt — orders, product questions, or to say hello.",
 };
 
 const CHANNELS = [
@@ -16,15 +16,22 @@ const CHANNELS = [
     note: "We reply within one business day.",
   },
   {
-    icon: Phone,
-    label: "WhatsApp",
-    value: "+92 42 1234 5678",
-    href: "https://wa.me/924212345678",
-    note: "Mon–Sat · 10am–6pm PKT",
+    icon: Instagram,
+    label: "Instagram",
+    value: "@bags_art_official",
+    href: "https://www.instagram.com/bags_art_official/",
+    note: "DMs open — expect a reply within a day.",
+  },
+  {
+    icon: Facebook,
+    label: "Facebook",
+    value: "BagsArt",
+    href: "https://www.facebook.com/share/14gt9w5emgu/",
+    note: "Follow for new drops and behind-the-scenes.",
   },
   {
     icon: MapPin,
-    label: "Atelier",
+    label: "Studio",
     value: "Lahore, Pakistan",
     href: "#",
     note: "By appointment only.",
@@ -39,11 +46,11 @@ export default function ContactPage() {
           Say hello
         </p>
         <h1 className="mt-3 font-display text-4xl sm:text-5xl tracking-tight">
-          Talk to the <span className="text-gradient-gold">atelier</span>.
+          Get <span className="text-gradient-gold">in touch</span>.
         </h1>
         <p className="mt-4 text-base sm:text-lg text-muted-foreground">
-          Order question, repair, wholesale enquiry, or just want to share a
-          photo of your bag in the wild — we'd love to hear from you.
+          Order question, product enquiry, or just want to share a photo of
+          your bag in the wild — we'd love to hear from you.
         </p>
       </header>
 

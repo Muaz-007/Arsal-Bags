@@ -91,7 +91,7 @@ export default async function ProductsPage({
               Summer <span className="text-gradient-gold">sale</span>.
             </>
           ) : (
-            "Every piece in the atelier."
+            "Every piece in the collection."
           )}
         </h1>
         <p className="mt-3 text-sm sm:text-base text-muted-foreground">
@@ -129,9 +129,14 @@ export default async function ProductsPage({
           {products.length === 0 ? (
             <div className="border border-dashed border-border rounded-2xl p-12 sm:p-16 text-center">
               <p className="font-display text-xl">No products match your filters</p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
                 Try widening your price range or clearing the category filter.
               </p>
+              <div className="mt-6">
+                <Button href="/products" variant="outline">
+                  Clear filters
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">

@@ -29,7 +29,7 @@ const DEFAULT_SLIDES: Slide[] = [
     href: "/products/florence-tote-cognac",
     src: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=70",
     alt: "Florence Tote in cognac leather",
-    tag: "Featured · Heritage",
+    tag: "Featured",
     name: "Florence Tote",
     price: "$480",
     tagline: "Hand-stitched in cognac full-grain leather.",

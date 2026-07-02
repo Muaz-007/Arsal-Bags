@@ -55,7 +55,7 @@ export default function TermsPage() {
       <ProseSection id="ip" title="Intellectual property">
         <p>
           The BagsArt name, logo, photography, and product designs are owned by
-          BagsArt Atelier and may not be used without written permission.
+          BagsArt and may not be used without written permission.
         </p>
       </ProseSection>
 

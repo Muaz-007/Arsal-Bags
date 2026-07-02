@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/toast";
 
 const SUBJECTS = [
   { value: "order", label: "Order question" },
-  { value: "repair", label: "Repair / lifetime guarantee" },
+  { value: "product", label: "Product enquiry" },
   { value: "wholesale", label: "Wholesale enquiry" },
   { value: "press", label: "Press / collaboration" },
   { value: "other", label: "Something else" },

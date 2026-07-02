@@ -42,7 +42,7 @@ export function Newsletter() {
         <div className="relative grid gap-8 md:grid-cols-2 items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              The Atelier letter
+              Newsletter
             </p>
             <h3 className="mt-3 font-display text-3xl md:text-4xl tracking-tight">
               A note when a new piece is finished.

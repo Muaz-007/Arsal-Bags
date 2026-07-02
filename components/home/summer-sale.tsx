@@ -41,7 +41,7 @@ export async function SummerSale() {
             </h2>
             <p className="mt-3 text-muted-foreground max-w-md">
               Up to <span className="font-medium text-foreground">25% off</span>{" "}
-              on selected pieces from the atelier — while quantities last.
+              on selected pieces from our store — while quantities last.
             </p>
           </div>
 

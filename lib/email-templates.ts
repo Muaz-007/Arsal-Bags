@@ -89,7 +89,7 @@ function shell({ preheader, title, bodyHtml }: ShellOptions): string {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;margin-top:24px;">
           <tr>
             <td align="center" style="padding:8px 16px;font-size:11px;color:${TEXT_MUTED};text-transform:uppercase;letter-spacing:1.6px;">
-              Atelier · Lahore
+              Studio · Lahore
             </td>
           </tr>
           <tr>
@@ -103,7 +103,7 @@ function shell({ preheader, title, bodyHtml }: ShellOptions): string {
           </tr>
           <tr>
             <td align="center" style="padding:8px 16px 0;font-size:11px;color:${TEXT_MUTED};">
-              © ${new Date().getFullYear()} BagsArt Atelier. All rights reserved.
+              © ${new Date().getFullYear()} BagsArt. All rights reserved.
             </td>
           </tr>
         </table>
@@ -133,10 +133,10 @@ export function welcomeTemplate(name: string): { html: string; text: string } {
   const firstName = name.split(" ")[0];
 
   const html = shell({
-    preheader: `Welcome to the BagsArt atelier, ${firstName}.`,
+    preheader: `Welcome to BagsArt, ${firstName}.`,
     title: "Welcome to BagsArt",
     bodyHtml: `
-      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">A note from the atelier</p>
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">A note from BagsArt</p>
       <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:32px;line-height:1.15;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
         Welcome, <span style="color:${GOLD_DARK};">${escape(firstName)}</span>.
       </h1>

@@ -62,23 +62,22 @@ export default function ShippingPage() {
           >
             bags.art.pk@gmail.com
           </a>{" "}
-          with your order number to start a return. We'll send a prepaid label
-          (domestic) or instructions (international).
+          with your order number to start a return. We'll share the return
+          address and pickup instructions. Return shipping is on the customer.
         </p>
       </ProseSection>
 
-      <ProseSection id="repairs" title="Lifetime repair">
+      <ProseSection id="care" title="Caring for your bag">
         <p>
-          Stitching come loose? Hardware tarnished? We'll repair any BagsArt
-          piece for the lifetime of the bag — you cover shipping, we cover the
-          rest. See the{" "}
+          Full-grain leather rewards a little attention. See the{" "}
           <a
             href="/help/care"
             className="underline decoration-gold underline-offset-4"
           >
             care guide
           </a>{" "}
-          for prevention.
+          for a monthly routine that keeps the finish, hardware, and stitching
+          looking their best for years.
         </p>
       </ProseSection>
     </ProsePage>

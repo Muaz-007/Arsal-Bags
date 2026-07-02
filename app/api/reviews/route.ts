@@ -13,6 +13,7 @@ const Schema = z.object({
   rating: z.number().int().min(1).max(5),
   title: z.string().min(2).max(120),
   body: z.string().min(8).max(2000),
+  images: z.array(z.string().url()).max(3).default([]),
 });
 
 /**
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid review" }, { status: 400 });
   }
-  const { productId, rating, title, body: text } = parsed.data;
+  const { productId, rating, title, body: text, images } = parsed.data;
 
   if (!prisma) {
     return NextResponse.json({ ok: true });
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         rating,
         title,
         body: text,
+        images,
       },
     });
 

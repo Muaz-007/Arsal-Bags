@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ArrowRight, Hammer, Heart, Leaf, ShieldCheck } from "lucide-react";
+import { ArrowRight, Hammer, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
-  title: "Atelier",
+  title: "About",
   description:
-    "BagsArt is a small leather goods studio in Lahore. Hand-stitched bags, honest materials, lifetime repair.",
+    "BagsArt is a small leather goods studio in Lahore. Hand-stitched bags in full-grain leather — made in small batches.",
 };
 
 const PILLARS = [
@@ -22,9 +22,9 @@ const PILLARS = [
     body: "Full-grain leather, solid brass, cotton-thread stitching, soft fabric linings. We list what's in every bag on its product page — no hidden coatings or filler layers.",
   },
   {
-    icon: Heart,
-    title: "Repair, don't replace",
-    body: "If a stitch fails or a strap wears through, send the bag back. We'll repair it at cost so a piece you love stays in service for years instead of ending up in a landfill.",
+    icon: Sparkles,
+    title: "Timeless design",
+    body: "Our shapes are drawn to sit quietly in your rotation for years — not to chase seasonal trends. Fewer pieces, drawn carefully, made properly.",
   },
   {
     icon: Leaf,
@@ -42,7 +42,7 @@ export default function AboutPage() {
         <div className="container py-20 lg:py-28 grid lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
           <Reveal>
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              The Atelier
+              About us
             </p>
             <h1 className="mt-4 font-display text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[1.05]">
               Leather goods,{" "}
@@ -67,7 +67,7 @@ export default function AboutPage() {
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border border-border">
               <Image
                 src="https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=900&q=70"
-                alt="Inside the atelier"
+                alt="Inside the studio"
                 fill
                 sizes="(min-width: 1024px) 520px, 90vw"
                 priority
@@ -137,7 +137,7 @@ export default function AboutPage() {
             },
             {
               title: "Cotton linings",
-              note: "Soft, breathable cotton — not the bonded plastic sheet you'll find inside most mid-range bags. Easier to repair, and it doesn't crack with age.",
+              note: "Soft, breathable cotton — not the bonded plastic sheet you'll find inside most mid-range bags. Ages gracefully and doesn't crack.",
               image:
                 "https://images.unsplash.com/photo-1610177498573-58c50bf01ff7?auto=format&fit=crop&w=600&q=70",
             },
@@ -165,75 +165,45 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Repair / longevity */}
+      {/* Collection CTA — closes the About page with a clear route to shop */}
       <section
-        id="sustainability"
-        className="border-y border-border bg-foreground text-background py-20 relative overflow-hidden"
+        id="collection"
+        className="border-y border-border bg-foreground text-background py-24 relative overflow-hidden"
       >
         <div className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full bg-gold/20 blur-3xl" />
-        <div className="container relative grid lg:grid-cols-[1fr_1.2fr] gap-12 items-center">
+        <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
+
+        <div className="container relative text-center max-w-2xl mx-auto">
           <Reveal>
             <p className="text-xs uppercase tracking-[0.22em] text-gold">
-              Built to be kept
+              The collection
             </p>
-            <h2 className="mt-3 font-display text-4xl tracking-tight">
-              A bag you only buy once.
+            <h2 className="mt-4 font-display text-4xl sm:text-5xl tracking-tight leading-[1.1]">
+              See the bags in{" "}
+              <span className="text-gradient-gold">their element</span>.
             </h2>
-            <p className="mt-5 text-background/75 leading-relaxed max-w-md">
-              The most sustainable thing a leather goods brand can do is make
-              something the owner keeps. We design for that — heavier hides,
-              double-stitched seams, hardware you can replace. And if anything
-              does go wrong, we'd rather fix it than sell you a new one.
+            <p className="mt-6 text-background/75 leading-relaxed">
+              Totes for the everyday, backpacks for the commute, clutches for
+              the evening — full-grain leather across every silhouette. Have
+              a look and choose the one that fits your day.
             </p>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <ul className="space-y-4 max-w-md text-background/85">
-              <li className="flex gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gold shrink-0" />
-                <span>
-                  In-house repair — restitching, re-edging, hardware
-                  replacement — for as long as you own the bag.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gold shrink-0" />
-                <span>
-                  Recycled-card boxes and paper tape. No plastic in the
-                  packaging.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gold shrink-0" />
-                <span>
-                  Small batch runs so we don't produce more than we can sell —
-                  unsold stock is its own kind of waste.
-                </span>
-              </li>
-            </ul>
+            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+              <Button href="/products" variant="gold" size="lg">
+                Shop the collection <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                href="/contact"
+                variant="outline"
+                size="lg"
+                className="border-background/30 text-background hover:bg-background/10"
+              >
+                Talk to us
+              </Button>
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container py-20">
-        <Reveal>
-          <div className="rounded-3xl border border-border bg-card p-8 sm:p-12 text-center max-w-3xl mx-auto">
-            <p className="font-display text-2xl sm:text-3xl tracking-tight">
-              Visit the studio.
-            </p>
-            <p className="mt-3 text-muted-foreground max-w-md mx-auto">
-              We take private appointments at our Lahore workshop. Come see how
-              the bags are made, or just stop by for a coffee and a look at the
-              leather.
-            </p>
-            <div className="mt-6">
-              <Button href="/contact" variant="gold" size="lg">
-                Get in touch <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </Reveal>
-      </section>
     </>
   );
 }

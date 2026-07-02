@@ -74,7 +74,7 @@ export default function PrivacyPage() {
 
       <ProseSection id="contact" title="Contact">
         <p>
-          BagsArt Atelier · Lahore, Pakistan · bags.art.pk@gmail.com.
+          BagsArt · Lahore, Pakistan · bags.art.pk@gmail.com.
           For data-protection requests, use the same address.
         </p>
       </ProseSection>

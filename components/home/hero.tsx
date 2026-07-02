@@ -54,7 +54,7 @@ export async function Hero() {
         <Reveal y={16}>
           <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <span className="h-px w-8 bg-gold" />
-            New · Summer Atelier 2026
+            New · Summer 2026
           </p>
           <h1 className="mt-5 font-display text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight">
             Crafted bags,{" "}
@@ -71,15 +71,15 @@ export async function Hero() {
               Shop the collection <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" href="/about">
-              Our atelier
+              About us
             </Button>
           </div>
 
           <div className="mt-12 grid grid-cols-3 max-w-md gap-6 text-sm">
             {[
-              { k: "Hand-stitched", v: "by master artisans" },
-              { k: "Full-grain", v: "Italian leather" },
-              { k: "Lifetime", v: "repair guarantee" },
+              { k: "Hand-stitched", v: "one piece at a time" },
+              { k: "Full-grain", v: "leather, always" },
+              { k: "Small batch", v: "made in Lahore" },
             ].map((s) => (
               <div key={s.k}>
                 <p className="font-display text-base">{s.k}</p>

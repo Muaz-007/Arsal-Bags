@@ -2,26 +2,80 @@ import Link from "next/link";
 import { Banknote, ChevronRight, CreditCard, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListToolbar } from "@/components/admin/list-toolbar";
 import { listOrders } from "@/lib/queries";
 import { formatDate, formatPrice } from "@/lib/utils";
 
-export default async function AdminOrdersPage() {
+type SP = { [k: string]: string | string[] | undefined };
+const first = (v: string | string[] | undefined) =>
+  Array.isArray(v) ? v[0] : v;
+
+const STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "paid", label: "Paid" },
+  { value: "fulfilled", label: "Fulfilled" },
+  { value: "shipped", label: "Shipped" },
+  { value: "delivered", label: "Delivered" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: "cod", label: "Cash on delivery" },
+  { value: "card", label: "Card" },
+];
+
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: SP;
+}) {
   const orders = await listOrders();
+
+  const q = (first(searchParams.q) ?? "").toLowerCase();
+  const status = first(searchParams.status);
+  const payment = first(searchParams.payment);
+
+  // Filter server-side against the already-loaded list. `listOrders` returns
+  // everything for now — small store, filtering in memory keeps the code
+  // simple. Move to DB-side filters if this grows past a few hundred orders.
+  const filtered = orders.filter((o) => {
+    if (status && o.status !== status) return false;
+    if (payment && o.paymentMethod !== payment) return false;
+    if (q) {
+      const hay = `${o.id} ${o.customerName} ${o.customerEmail} ${o.trackingNumber ?? ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const hasQuery = !!(q || status || payment);
+
   return (
     <div className="space-y-6">
       <header>
         <h1 className="font-display text-3xl">Orders</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {orders.length} orders across all customers. Click a row to edit
-          status and tracking.
+          {hasQuery
+            ? `${filtered.length} match${filtered.length === 1 ? "" : "es"} of ${orders.length} total.`
+            : `${orders.length} orders across all customers. Click a row to edit status and tracking.`}
         </p>
       </header>
 
+      <ListToolbar
+        searchPlaceholder="Search by order ID, name, email, tracking…"
+        filters={[
+          { key: "status", options: STATUS_OPTIONS, label: "statuses" },
+          { key: "payment", options: PAYMENT_OPTIONS, label: "methods" },
+        ]}
+      />
+
       <Card>
         <CardContent className="p-0 overflow-x-auto">
-          {orders.length === 0 ? (
+          {filtered.length === 0 ? (
             <p className="p-10 text-center text-sm text-muted-foreground">
-              No orders yet.
+              {hasQuery
+                ? "No orders match those filters."
+                : "No orders yet. When a customer checks out, you'll see them here."}
             </p>
           ) : (
             <table className="w-full text-sm min-w-[820px]">
@@ -39,7 +93,7 @@ export default async function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {orders.map((o) => (
+                {filtered.map((o) => (
                   <tr
                     key={o.id}
                     className="hover:bg-muted/30 transition-colors"

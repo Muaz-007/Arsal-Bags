@@ -68,8 +68,8 @@ export function VarietyCta() {
             </h2>
             <p className="mt-5 text-muted-foreground max-w-md leading-relaxed">
               From day totes to evening clutches, weekend duffels to bifold
-              wallets — every silhouette, every finish, every color the atelier
-              currently makes. All in one place.
+              wallets — every silhouette, every finish, every color we
+              currently make. All in one place.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
