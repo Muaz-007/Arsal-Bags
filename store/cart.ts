@@ -8,8 +8,8 @@ interface CartState {
   lines: CartLine[];
   coupon?: { code: string; type: "percent" | "fixed"; value: number };
   add: (line: CartLine) => void;
-  update: (productId: string, quantity: number) => void;
-  remove: (productId: string) => void;
+  update: (productId: string, quantity: number, color?: string) => void;
+  remove: (productId: string, color?: string) => void;
   clear: () => void;
   applyCoupon: (c: CartState["coupon"]) => void;
   totalItems: () => number;
@@ -40,15 +40,24 @@ export const useCart = create<CartState>()(
         }
         set({ lines });
       },
-      update: (productId, quantity) => {
+      update: (productId, quantity, color) => {
+        // Match on (productId, color) so different color variants of the same
+        // product are treated as distinct cart lines — mirrors the add() key.
+        const isSame = (l: CartLine) =>
+          l.productId === productId && (color === undefined || l.color === color);
         set({
           lines: get()
-            .lines.map((l) => (l.productId === productId ? { ...l, quantity } : l))
+            .lines.map((l) => (isSame(l) ? { ...l, quantity } : l))
             .filter((l) => l.quantity > 0),
         });
       },
-      remove: (productId) =>
-        set({ lines: get().lines.filter((l) => l.productId !== productId) }),
+      remove: (productId, color) => {
+        // Same matching rule as update(): only remove the exact variant so
+        // deleting one color doesn't wipe out the customer's other colors.
+        const isSame = (l: CartLine) =>
+          l.productId === productId && (color === undefined || l.color === color);
+        set({ lines: get().lines.filter((l) => !isSame(l)) });
+      },
       clear: () => set({ lines: [], coupon: undefined }),
       applyCoupon: (c) => set({ coupon: c }),
       totalItems: () => get().lines.reduce((a, l) => a + l.quantity, 0),

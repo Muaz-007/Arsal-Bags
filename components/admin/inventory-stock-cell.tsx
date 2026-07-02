@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Loader2, Minus, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 /**
- * Inline stock editor for the inventory table. Optimistic local state + a
- * toast confirmation. In a real app this would write to /api/admin/inventory.
+ * Inline stock editor for the inventory table.
+ *
+ * Design goals:
+ *   - Optimistic UI: local value bumps immediately on click so the buttons
+ *     feel responsive even when the DB write is slow.
+ *   - Debounced persist: clicks are batched into a single PATCH after the
+ *     admin stops clicking for 400ms, so hammering "+" ten times triggers
+ *     one round-trip instead of ten.
+ *   - Rollback on error: if the API rejects the update we snap back to the
+ *     last-known-good value and surface a toast.
  */
 export function StockCell({
   id,
@@ -16,28 +25,63 @@ export function StockCell({
   id: string;
   initial: number;
 }) {
+  const router = useRouter();
+  const push = useToast((s) => s.push);
   const [value, setValue] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const push = useToast((s) => s.push);
+  const lastPersisted = useRef(initial);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function persist(next: number) {
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  async function persist(next: number) {
     setBusy(true);
-    setTimeout(() => {
-      setBusy(false);
-      setSavedAt(Date.now());
-      push({
-        title: "Stock updated",
-        description: `${next} units in inventory`,
-        tone: "success",
+    try {
+      const res = await fetch("/api/admin/inventory", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ productId: id, stock: next }),
       });
-    }, 350);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setValue(lastPersisted.current);
+        push({
+          title: "Couldn't save stock",
+          description: data?.error ?? "Please try again.",
+          tone: "error",
+        });
+        return;
+      }
+      lastPersisted.current = next;
+      setSavedAt(Date.now());
+      // Keep the surrounding page (low-stock counts, etc.) in sync.
+      router.refresh();
+    } catch {
+      setValue(lastPersisted.current);
+      push({
+        title: "Couldn't save stock",
+        description: "Check your connection and try again.",
+        tone: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function schedulePersist(next: number) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => persist(next), 400);
   }
 
   function set(next: number) {
     const clamped = Math.max(0, next);
     setValue(clamped);
-    persist(clamped);
+    schedulePersist(clamped);
   }
 
   const tone =
@@ -61,7 +105,7 @@ export function StockCell({
       <button
         type="button"
         onClick={() => set(value - 1)}
-        disabled={busy || value === 0}
+        disabled={value === 0}
         aria-label="Decrease stock"
         className="h-7 w-7 grid place-items-center rounded-full border border-border hover:bg-muted disabled:opacity-40 transition"
       >
@@ -84,7 +128,6 @@ export function StockCell({
       <button
         type="button"
         onClick={() => set(value + 1)}
-        disabled={busy}
         aria-label="Increase stock"
         className="h-7 w-7 grid place-items-center rounded-full border border-border hover:bg-muted disabled:opacity-40 transition"
       >

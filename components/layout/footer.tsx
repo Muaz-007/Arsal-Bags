@@ -34,7 +34,7 @@ const sections = [
       { href: "/about", label: "Our story" },
       { href: "/about#craft", label: "How we work" },
       { href: "/about#materials", label: "Materials" },
-      { href: "/about#sustainability", label: "Built to last" },
+      { href: "/about#collection", label: "The collection" },
     ],
   },
   {

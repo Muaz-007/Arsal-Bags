@@ -154,17 +154,33 @@ export const authOptions: NextAuthOptions = {
         const email = user.email?.toLowerCase().trim();
         if (!email) return false;
 
-        const dbUser = await prisma.user.upsert({
+        // Guard against Google → credentials account takeover: if an account
+        // already exists with a password (i.e. someone signed up via email +
+        // password using this address), refuse the Google sign-in rather
+        // than silently linking the two. The credentials owner can add
+        // Google later from their profile — until then the two identities
+        // stay separate.
+        const existing = await prisma.user.findUnique({
           where: { email },
-          update: { name: user.name ?? undefined },
-          create: {
-            email,
-            name: user.name ?? email.split("@")[0],
-            role: "customer",
-            // passwordHash stays null — the profile page uses this to
-            // identify Google-only users and lock the email field.
-          },
+          select: { id: true, role: true, passwordHash: true },
         });
+        if (existing?.passwordHash) {
+          // Redirect to a friendly error page rather than letting the OAuth
+          // callback silently swap the account owner's identity.
+          return "/auth/login?error=OAuthAccountNotLinked";
+        }
+
+        const dbUser =
+          existing ??
+          (await prisma.user.create({
+            data: {
+              email,
+              name: user.name ?? email.split("@")[0],
+              role: "customer",
+              // passwordHash stays null — the profile page uses this to
+              // identify Google-only users and lock the email field.
+            },
+          }));
 
         user.id = dbUser.id;
         (user as any).role = dbUser.role;

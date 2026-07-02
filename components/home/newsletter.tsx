@@ -19,17 +19,34 @@ export function Newsletter() {
     }
     setLoading(true);
     try {
-      await fetch("/api/newsletter", {
+      const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        push({
+          title: "Couldn't subscribe",
+          description:
+            data?.error ??
+            "Something went wrong on our end. Please try again in a moment.",
+          tone: "error",
+        });
+        return;
+      }
       push({
         title: "You're on the list",
         description: "Look out for our next capsule launch in your inbox.",
         tone: "success",
       });
       setEmail("");
+    } catch {
+      push({
+        title: "Couldn't subscribe",
+        description: "Check your connection and try again.",
+        tone: "error",
+      });
     } finally {
       setLoading(false);
     }

@@ -121,21 +121,25 @@ export default function CartPage() {
                   <div className="mt-3 flex items-center gap-3">
                     <div className="inline-flex items-center rounded-full border border-border">
                       <button
-                        onClick={() => update(line.productId, line.quantity - 1)}
+                        onClick={() =>
+                          update(line.productId, line.quantity - 1, line.color)
+                        }
                         className="h-8 w-8 grid place-items-center hover:bg-muted rounded-l-full"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="w-8 text-center text-sm">{line.quantity}</span>
                       <button
-                        onClick={() => update(line.productId, line.quantity + 1)}
+                        onClick={() =>
+                          update(line.productId, line.quantity + 1, line.color)
+                        }
                         className="h-8 w-8 grid place-items-center hover:bg-muted rounded-r-full"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
                     <button
-                      onClick={() => remove(line.productId)}
+                      onClick={() => remove(line.productId, line.color)}
                       className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Remove

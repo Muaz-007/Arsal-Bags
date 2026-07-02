@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
 import { sendOrderConfirmation } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 const LineSchema = z.object({
   productId: z.string(),
@@ -35,6 +36,10 @@ const SHIPPING_FEE = 15;
 const TAX_RATE = 0.08;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Distinct error class so the outer catch can tell an expected "out of stock"
+// case (safe to surface) from a Prisma/runtime failure (must be redacted).
+class StockError extends Error {}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -89,8 +94,11 @@ export async function POST(req: Request) {
     try {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
-        success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.get("origin")}/checkout`,
+        // Anchor Stripe redirect URLs to our own SITE_URL rather than the
+        // request Origin — Origin is client-controlled and could smuggle
+        // Stripe sessions off to an attacker-owned domain.
+        success_url: `${SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${SITE_URL}/checkout`,
         customer_email: customer.email,
         line_items: items.map((i) => ({
           price_data: {
@@ -128,10 +136,12 @@ export async function POST(req: Request) {
         for (const line of items) {
           const p = stockMap.get(line.productId);
           if (!p) {
-            throw new Error(`"${line.name}" is no longer available.`);
+            // Tag the message so the outer catch can distinguish an expected
+            // "out of stock" case from an unexpected Prisma/runtime error.
+            throw new StockError(`"${line.name}" is no longer available.`);
           }
           if (p.stock < line.quantity) {
-            throw new Error(
+            throw new StockError(
               p.stock === 0
                 ? `"${p.name}" is sold out.`
                 : `Only ${p.stock} left of "${p.name}" — please reduce the quantity.`
@@ -178,9 +188,18 @@ export async function POST(req: Request) {
       });
       id = order.id;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong placing the order.";
-      return NextResponse.json({ error: message }, { status: 409 });
+      // Only surface stock/availability messages to the customer verbatim.
+      // Any other thrown value is an internal error (DB down, constraint
+      // violation, etc.) — log it and return a generic message so we don't
+      // leak Prisma internals or schema hints to the client.
+      if (err instanceof StockError) {
+        return NextResponse.json({ error: err.message }, { status: 409 });
+      }
+      console.error("[checkout] order transaction failed", err);
+      return NextResponse.json(
+        { error: "We couldn't place the order. Please try again." },
+        { status: 500 }
+      );
     }
 
     // Coupon uses is outside the transaction — best-effort, non-blocking.

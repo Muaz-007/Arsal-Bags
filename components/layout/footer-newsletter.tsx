@@ -26,13 +26,28 @@ export function FooterNewsletter() {
     }
     setLoading(true);
     try {
-      await fetch("/api/newsletter", {
+      const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, source: "footer" }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        push({
+          title: "Couldn't subscribe",
+          description: data?.error ?? "Please try again in a moment.",
+          tone: "error",
+        });
+        return;
+      }
       setDone(true);
       setEmail("");
+    } catch {
+      push({
+        title: "Couldn't subscribe",
+        description: "Check your connection and try again.",
+        tone: "error",
+      });
     } finally {
       setLoading(false);
     }
