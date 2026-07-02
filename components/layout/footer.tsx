@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Instagram, Twitter, Youtube, Mail, MapPin } from "lucide-react";
+import { FooterNewsletter } from "./footer-newsletter";
 
 const sections = [
   {
@@ -84,6 +85,16 @@ export function Footer() {
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
+            </div>
+
+            <div className="mt-8">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                The Atelier letter
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground max-w-sm">
+                One quiet note a month when new pieces leave the studio.
+              </p>
+              <FooterNewsletter />
             </div>
           </div>
 

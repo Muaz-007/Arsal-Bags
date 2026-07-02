@@ -8,6 +8,7 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { useToast } from "@/components/ui/toast";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import type { Category, Product } from "@/types";
 
 const CATEGORY_OPTIONS = [
@@ -197,21 +198,8 @@ export function ProductForm({ initial }: { initial?: Product }) {
           <CardHeader>
             <CardTitle>Media</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="images">Image URLs (one per line)</Label>
-              <Textarea
-                id="images"
-                name="images"
-                rows={5}
-                required={!isEdit}
-                defaultValue={initial?.images.join("\n") ?? ""}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Tip: drop Cloudinary or Unsplash URLs here. First image is the
-              cover shown in cards and the hero gallery.
-            </p>
+          <CardContent>
+            <ImageUploader name="images" initialUrls={initial?.images} />
           </CardContent>
         </Card>
 
