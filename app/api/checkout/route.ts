@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
 import { sendOrderConfirmation } from "@/lib/email";
-import { SITE_URL } from "@/lib/site";
 
 const LineSchema = z.object({
   productId: z.string(),
@@ -27,7 +25,12 @@ const Schema = z.object({
   }),
   items: z.array(LineSchema).min(1),
   couponCode: z.string().max(40).optional(),
-  paymentMethod: z.enum(["card", "cod"]).default("cod"),
+  // Card / online payments are advertised as "coming soon" on the checkout
+  // UI. Enforce the same server-side so a bypassed client can't slip a
+  // `paymentMethod: "card"` order into the DB with status "pending" but
+  // paymentMethod = "card" (which would falsely appear as a card payment
+  // in the admin view). Widen this enum when Stripe/JazzCash is live.
+  paymentMethod: z.enum(["cod"]).default("cod"),
 });
 
 // Same rules used on the cart store — kept in sync intentionally.
@@ -86,35 +89,12 @@ export async function POST(req: Request) {
   const tax = round2(afterDiscount * TAX_RATE);
   const total = round2(Math.max(0, afterDiscount + shipping + tax));
 
-  // ── Optional Stripe Checkout session ─────────────────────────────────────
-  // Skip Stripe entirely for COD orders — customer pays courier on delivery.
-  let paymentRef: string | undefined;
-
-  if (paymentMethod === "card" && stripe) {
-    try {
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        // Anchor Stripe redirect URLs to our own SITE_URL rather than the
-        // request Origin — Origin is client-controlled and could smuggle
-        // Stripe sessions off to an attacker-owned domain.
-        success_url: `${SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${SITE_URL}/checkout`,
-        customer_email: customer.email,
-        line_items: items.map((i) => ({
-          price_data: {
-            currency: "usd",
-            product_data: { name: i.name, images: [i.image] },
-            unit_amount: Math.round(i.price * 100),
-          },
-          quantity: i.quantity,
-        })),
-      });
-      paymentRef = session.id;
-    } catch (err) {
-      console.error("Stripe error", err);
-      return NextResponse.json({ error: "Payment failed" }, { status: 500 });
-    }
-  }
+  // ── Payment ─────────────────────────────────────────────────────────────
+  // COD only for now — customer pays the courier on delivery. Card / online
+  // payment is "coming soon" (see the Zod enum above and the disabled option
+  // on the checkout UI). When Stripe/JazzCash is wired up, widen the
+  // `paymentMethod` enum and add the branch that sets a `paymentRef`.
+  const paymentRef: string | undefined = undefined;
 
   const me = await getCurrentUser();
 

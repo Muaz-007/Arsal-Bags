@@ -253,17 +253,17 @@ export default function CheckoutPage() {
               type="button"
               disabled
               aria-disabled
-              className="text-left rounded-xl border border-dashed border-border p-4 opacity-50 cursor-not-allowed"
+              className="text-left rounded-xl border border-dashed border-border p-4 opacity-60 cursor-not-allowed"
             >
               <div className="flex items-center gap-2.5">
                 <CreditCard className="h-4 w-4" />
-                <span className="font-medium text-sm">Card</span>
-                <span className="ml-auto text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Soon
+                <span className="font-medium text-sm">Card / online</span>
+                <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Coming soon
                 </span>
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
-                Online payment is coming shortly.
+                We're setting up online payments — cash on delivery for now.
               </p>
             </button>
           </div>
