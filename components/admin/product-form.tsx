@@ -8,7 +8,7 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { useToast } from "@/components/ui/toast";
-import type { Product } from "@/types";
+import type { Category, Product } from "@/types";
 
 const CATEGORY_OPTIONS = [
   { value: "tote", label: "Tote" },
@@ -31,7 +31,7 @@ export function ProductForm({ initial }: { initial?: Product }) {
 
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [category, setCategory] = useState(initial?.category ?? "tote");
+  const [category, setCategory] = useState<Category>(initial?.category ?? "tote");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -177,7 +177,7 @@ export function ProductForm({ initial }: { initial?: Product }) {
               <Label>Category</Label>
               <Dropdown
                 value={category}
-                onChange={setCategory}
+                onChange={(v) => setCategory(v as Category)}
                 options={CATEGORY_OPTIONS}
               />
               <input type="hidden" name="category" value={category} />
