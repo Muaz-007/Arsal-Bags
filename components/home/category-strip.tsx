@@ -31,13 +31,13 @@ export interface StripItem {
 }
 
 const DEFAULT_ITEMS: StripItem[] = [
-  { label: "Under $199", href: "/products?price=0-199", image: img("photo-1606513542745-97629752a13b") },
+  { label: "Under Rs 15k", href: "/products?price=0-15000", image: img("photo-1606513542745-97629752a13b") },
   { label: "Best Sellers", href: "/products?sort=popular", image: img("photo-1548036328-c9fa89d128fa") },
-  { label: "Under $299", href: "/products?price=0-299", image: img("photo-1566150905458-1bf1fc113f0d") },
+  { label: "Under Rs 30k", href: "/products?price=0-30000", image: img("photo-1566150905458-1bf1fc113f0d") },
   { label: "Backpacks", href: "/products?category=backpack", image: img("photo-1553062407-98eeb64c6a62") },
   { label: "On Sale", href: "/products?sale=1", image: img("photo-1591348278863-a8fb3887e2aa") },
   { label: "Totes", href: "/products?category=tote", image: img("photo-1590874103328-eac38a683ce7") },
-  { label: "Under $499", href: "/products?price=0-499", image: img("photo-1564422170194-896b89110ef8") },
+  { label: "Under Rs 50k", href: "/products?price=0-50000", image: img("photo-1564422170194-896b89110ef8") },
   { label: "Signature", href: "/products?collection=heritage", image: img("photo-1547949003-9792a18a2601") },
   { label: "Crossbody", href: "/products?category=crossbody", image: img("photo-1584917865442-de89df76afd3") },
   { label: "New In", href: "/products?sort=latest", image: img("photo-1622560480605-d83c853bc5c3") },

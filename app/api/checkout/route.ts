@@ -33,10 +33,11 @@ const Schema = z.object({
   paymentMethod: z.enum(["cod"]).default("cod"),
 });
 
-// Same rules used on the cart store — kept in sync intentionally.
-const SHIPPING_FREE_THRESHOLD = 250;
-const SHIPPING_FEE = 15;
-const TAX_RATE = 0.08;
+// PKR amounts. Rs 250 shipping, waived on orders Rs 4,000+. No sales tax.
+// Kept in sync with `store/cart.ts` — server is the authority for the
+// final charged amounts.
+const SHIPPING_FEE = 250;
+const SHIPPING_FREE_THRESHOLD = 4000;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -85,9 +86,13 @@ export async function POST(req: Request) {
 
   const afterDiscount = subtotal - discount;
   const shipping =
-    afterDiscount <= 0 ? 0 : afterDiscount >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FEE;
-  const tax = round2(afterDiscount * TAX_RATE);
-  const total = round2(Math.max(0, afterDiscount + shipping + tax));
+    afterDiscount <= 0
+      ? 0
+      : afterDiscount >= SHIPPING_FREE_THRESHOLD
+        ? 0
+        : SHIPPING_FEE;
+  const tax = 0;
+  const total = round2(Math.max(0, afterDiscount + shipping));
 
   // ── Payment ─────────────────────────────────────────────────────────────
   // COD only for now — customer pays the courier on delivery. Card / online
@@ -195,8 +200,11 @@ export async function POST(req: Request) {
     id = `ord_${Date.now().toString(36)}`;
   }
 
-  // Fire-and-forget order confirmation.
-  void sendOrderConfirmation(customer.email, {
+  // Await the confirmation so Vercel doesn't kill the SMTP request when the
+  // response returns. sendOrderConfirmation swallows its own errors, so a
+  // failed send never rolls back the order — but we log it and the customer
+  // still gets a successful checkout response.
+  await sendOrderConfirmation(customer.email, {
     id,
     customerName: customer.name,
     total,

@@ -10,7 +10,6 @@ import {
   ShoppingCart,
   Users,
   Tag,
-  ImageIcon,
   Settings,
   Menu,
   X,
@@ -43,7 +42,6 @@ const NAV: NavGroup[] = [
     { href: "/admin/storefront", label: "Sections", icon: LayoutTemplate },
     { href: "/admin/products", label: "Products", icon: Package },
     { href: "/admin/inventory", label: "Inventory", icon: Boxes },
-    { href: "/admin/cms", label: "Media", icon: ImageIcon },
   ]},
   { group: "Sales", items: [
     { href: "/admin/orders", label: "Orders", icon: ShoppingCart },

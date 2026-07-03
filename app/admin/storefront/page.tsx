@@ -51,9 +51,9 @@ const HERO_SLIDES: SectionItem[] = [
 ];
 
 const STRIP_ITEMS: SectionItem[] = [
-  { id: "strip_1", title: "Under $199", subtitle: "Price filter", image: "https://images.unsplash.com/photo-1606513542745-97629752a13b?auto=format&fit=crop&w=200&q=70", href: "/products?price=0-199", visible: true },
+  { id: "strip_1", title: "Under Rs 15k", subtitle: "Price filter", image: "https://images.unsplash.com/photo-1606513542745-97629752a13b?auto=format&fit=crop&w=200&q=70", href: "/products?price=0-15000", visible: true },
   { id: "strip_2", title: "Best Sellers", subtitle: "Curated", image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=200&q=70", href: "/products?sort=popular", visible: true },
-  { id: "strip_3", title: "Under $299", subtitle: "Price filter", image: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&w=200&q=70", href: "/products?price=0-299", visible: true },
+  { id: "strip_3", title: "Under Rs 30k", subtitle: "Price filter", image: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&w=200&q=70", href: "/products?price=0-30000", visible: true },
   { id: "strip_4", title: "Backpacks", subtitle: "Category", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=200&q=70", href: "/products?category=backpack", visible: true },
   { id: "strip_5", title: "On Sale", subtitle: "Curated", image: "https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?auto=format&fit=crop&w=200&q=70", href: "/products?sale=1", visible: true },
   { id: "strip_6", title: "Totes", subtitle: "Category", image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=200&q=70", href: "/products?category=tote", visible: true },

@@ -30,6 +30,11 @@ function toStripItems(items: AdminStripItem[] | null): StripItem[] | undefined {
   }));
 }
 
+// Homepage renders on every request so admin edits (stock, storefront config,
+// featured picks, new products) reflect immediately. If traffic grows and this
+// becomes expensive, swap to `export const revalidate = 60` for ISR.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const rawStrip = await getStorefrontConfig<AdminStripItem[]>("strip");
   const stripItems = toStripItems(rawStrip);

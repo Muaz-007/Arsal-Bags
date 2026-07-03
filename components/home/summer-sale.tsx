@@ -47,7 +47,7 @@ export async function SummerSale() {
 
           <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <Sparkles className="h-4 w-4 text-gold" />
-            <span>Free shipping on every order over $250</span>
+            <span>Free delivery on orders over Rs 4,000</span>
           </div>
         </div>
       </div>

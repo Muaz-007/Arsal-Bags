@@ -34,7 +34,7 @@ function mapDbProduct(p: any): Product {
     description: p.description,
     price: D(p.price),
     compareAt: p.compareAt != null ? D(p.compareAt) : undefined,
-    currency: "USD",
+    currency: "PKR",
     category: p.category as Category,
     collection: p.collection ?? undefined,
     colors: Array.isArray(p.colors) ? p.colors : [],

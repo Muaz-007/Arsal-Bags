@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,8 +69,8 @@ export function ContactForm() {
             We've received your note and will reply within one business day —
             usually sooner.
           </p>
-          <Button onClick={() => setSent(false)} variant="outline" className="mt-6">
-            Send another
+          <Button href="/products" variant="gold" className="mt-6">
+            Back to shopping <ArrowRight className="h-4 w-4" />
           </Button>
         </CardContent>
       </Card>

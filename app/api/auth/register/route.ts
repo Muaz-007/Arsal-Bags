@@ -52,8 +52,10 @@ export async function POST(req: Request) {
     select: { id: true, name: true, email: true },
   });
 
-  // Fire-and-forget welcome email (transport handles its own errors).
-  void sendWelcomeEmail(user.email, user.name);
+  // Await so Vercel's serverless runtime doesn't kill the SMTP request when
+  // the response returns. The transport swallows its own errors, so a
+  // failed welcome email never rolls back the signup.
+  await sendWelcomeEmail(user.email, user.name);
 
   return NextResponse.json(user, { status: 201 });
 }

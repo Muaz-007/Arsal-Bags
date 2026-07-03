@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ArrowRight, Hammer, Leaf, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "BagsArt is a small leather goods studio in Lahore. Hand-stitched bags in full-grain leather — made in small batches.",
+    "BagsArt is a small leather goods studio in Lahore. Premium quality bags in full-grain leather — made in small batches.",
 };
 
 const PILLARS = [
   {
-    icon: Hammer,
-    title: "Made by hand",
-    body: "Each bag is cut, stitched, and finished by one maker rather than passed down a production line. It takes longer. It also means there's one person responsible for every piece that leaves the studio.",
+    icon: ClipboardCheck,
+    title: "Quality checked, piece by piece",
+    body: "Every bag goes through a full quality check before it ships — stitching, hardware, edge finish, lining. If it doesn't meet the standard, it doesn't leave the studio.",
   },
   {
     icon: ShieldCheck,
@@ -49,9 +49,10 @@ export default function AboutPage() {
               <span className="text-gradient-gold">built to last</span>.
             </h1>
             <p className="mt-6 max-w-xl text-muted-foreground text-lg leading-relaxed">
-              BagsArt is a small studio in Lahore making bags the slow way —
-              one piece at a time, from full-grain leather, finished by hand.
-              No shortcuts, no plastic linings, no rebranded import.
+              BagsArt is a small studio in Lahore, making leather bags one
+              batch at a time from full-grain leather. Every piece is
+              inspected before it ships — no shortcuts, no plastic linings,
+              no rebranded imports.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button href="/products" variant="gold" size="lg">

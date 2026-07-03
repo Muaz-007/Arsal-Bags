@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Facebook, Instagram, Mail, MapPin, Send } from "lucide-react";
+import { Facebook, Instagram, Mail, Send } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
 
 export const metadata: Metadata = {
@@ -7,7 +7,16 @@ export const metadata: Metadata = {
   description: "Get in touch with BagsArt — orders, product questions, or to say hello.",
 };
 
-const CHANNELS = [
+interface Channel {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  href: string;
+  note: string;
+  external?: boolean;
+}
+
+const CHANNELS: Channel[] = [
   {
     icon: Mail,
     label: "Email",
@@ -21,6 +30,7 @@ const CHANNELS = [
     value: "@bags_art_official",
     href: "https://www.instagram.com/bags_art_official/",
     note: "DMs open — expect a reply within a day.",
+    external: true,
   },
   {
     icon: Facebook,
@@ -28,13 +38,7 @@ const CHANNELS = [
     value: "BagsArt",
     href: "https://www.facebook.com/share/14gt9w5emgu/",
     note: "Follow for new drops and behind-the-scenes.",
-  },
-  {
-    icon: MapPin,
-    label: "Studio",
-    value: "Lahore, Pakistan",
-    href: "#",
-    note: "By appointment only.",
+    external: true,
   },
 ];
 
@@ -57,10 +61,13 @@ export default function ContactPage() {
       <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr]">
         {/* Channels */}
         <div className="space-y-4">
-          {CHANNELS.map(({ icon: Icon, label, value, href, note }) => (
+          {CHANNELS.map(({ icon: Icon, label, value, href, note, external }) => (
             <a
               key={label}
               href={href}
+              {...(external
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
               className="block rounded-2xl border border-border bg-card p-5 hover:border-foreground/30 transition-colors"
             >
               <div className="flex items-center gap-3 mb-2">

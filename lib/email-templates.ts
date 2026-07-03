@@ -141,7 +141,7 @@ export function welcomeTemplate(name: string): { html: string; text: string } {
         Welcome, <span style="color:${GOLD_DARK};">${escape(firstName)}</span>.
       </h1>
       <p style="margin:0 0 14px;font-size:15px;color:${TEXT};">
-        Glad to have you with us. BagsArt is a small studio making leather bags the slow way — one piece, one artisan, one signature inside.
+        Glad to have you with us. BagsArt is a small studio making leather bags the careful way — full-grain leather, quality-checked before every piece ships.
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:${TEXT};">
         Your account is set up. From here, you can track orders, save favorites to your wishlist, and check out faster on any device.
@@ -160,7 +160,7 @@ export function welcomeTemplate(name: string): { html: string; text: string } {
 
 Hi ${firstName},
 
-Glad to have you with us. BagsArt is a small studio making leather bags the slow way — one piece, one artisan, one signature inside.
+Glad to have you with us. BagsArt is a small studio making leather bags the careful way — full-grain leather, quality-checked before every piece ships.
 
 Your account is set up. You can track orders, save favorites to your wishlist, and check out faster on any device.
 
@@ -195,8 +195,10 @@ export function orderConfirmationTemplate(order: {
     )
     .join("");
 
+  const formattedTotal = `Rs ${Math.round(order.total).toLocaleString("en-PK")}`;
+
   const html = shell({
-    preheader: `Order ${order.id} confirmed · $${order.total.toFixed(2)}`,
+    preheader: `Order ${order.id} confirmed · ${formattedTotal}`,
     title: "Order confirmed",
     bodyHtml: `
       <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Order confirmed</p>
@@ -227,7 +229,7 @@ export function orderConfirmationTemplate(order: {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 8px;">
         <tr>
           <td style="font-size:14px;color:${TEXT_MUTED};">Total</td>
-          <td align="right" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:${TEXT};">$${order.total.toFixed(2)}</td>
+          <td align="right" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:${TEXT};">${formattedTotal}</td>
         </tr>
       </table>
 
@@ -251,7 +253,7 @@ Thank you for ordering from BagsArt.
 Items:
 ${order.items.map((i) => `· ${i.quantity}× ${i.name}`).join("\n")}
 
-Total: $${order.total.toFixed(2)}
+Total: ${formattedTotal}
 
 Track your order: ${BASE_URL}/dashboard/orders/${order.id}
 
@@ -314,6 +316,94 @@ ${link}
 If it wasn't you, you can safely ignore this email.
 
 — The BagsArt team`;
+
+  return { html, text };
+}
+
+/* ─── Contact form message (admin-facing) ────────────────────────────── */
+
+export function contactMessageTemplate(input: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): { html: string; text: string } {
+  const subjectLabel: Record<string, string> = {
+    order: "Order question",
+    product: "Product enquiry",
+    wholesale: "Wholesale enquiry",
+    press: "Press / collaboration",
+    other: "Something else",
+  };
+  const prettySubject = subjectLabel[input.subject] ?? input.subject;
+  const timestamp = new Date().toLocaleString("en-PK", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Karachi",
+  });
+
+  // Preserve customer's line breaks in the rendered HTML.
+  const messageHtml = escape(input.message).replace(/\n/g, "<br />");
+
+  const html = shell({
+    preheader: `${prettySubject} from ${input.name}`,
+    title: `New message from ${input.name}`,
+    bodyHtml: `
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Contact form</p>
+      <h1 style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
+        New message from <span style="color:${GOLD_DARK};">${escape(input.name)}</span>.
+      </h1>
+      <p style="margin:0 0 22px;font-size:14px;color:${TEXT_MUTED};">
+        ${escape(timestamp)} · via bagsart.com
+      </p>
+
+      <!-- From row -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f9f6ef;border:1px solid ${BORDER};border-radius:12px;margin:0 0 18px;">
+        <tr>
+          <td style="padding:16px 20px;">
+            <p style="margin:0 0 4px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${TEXT_MUTED};">From</p>
+            <p style="margin:0 0 10px;font-size:15px;color:${TEXT};font-weight:600;">${escape(input.name)}</p>
+            <p style="margin:0;font-size:13px;">
+              <a href="mailto:${escape(input.email)}" style="color:${GOLD_DARK};text-decoration:none;font-family:'SF Mono',Menlo,Consolas,monospace;">${escape(input.email)}</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Subject pill -->
+      <p style="margin:0 0 8px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${TEXT_MUTED};">Subject</p>
+      <p style="margin:0 0 18px;">
+        <span style="display:inline-block;padding:6px 14px;background:${GOLD};color:${TEXT};border-radius:999px;font-size:13px;font-weight:600;letter-spacing:0.2px;">${escape(prettySubject)}</span>
+      </p>
+
+      <!-- Message body -->
+      <p style="margin:0 0 8px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${TEXT_MUTED};">Message</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${CARD};border:1px solid ${BORDER};border-radius:12px;margin:0 0 22px;">
+        <tr>
+          <td style="padding:20px 22px;font-size:15px;line-height:1.65;color:${TEXT};">
+            ${messageHtml}
+          </td>
+        </tr>
+      </table>
+
+      ${ctaButton(`mailto:${input.email}?subject=Re: ${encodeURIComponent(prettySubject)}`, "Reply to " + input.name.split(" ")[0])}
+
+      <p style="margin:24px 0 0;font-size:12px;color:${TEXT_MUTED};">
+        Just hit reply on this email to respond — it will go straight to ${escape(input.email)}.
+      </p>
+    `,
+  });
+
+  const text = `New message from ${input.name}
+
+From: ${input.name} <${input.email}>
+Subject: ${prettySubject}
+Sent: ${timestamp}
+
+${input.message}
+
+--
+Reply to this email to respond to the customer directly.`;
 
   return { html, text };
 }

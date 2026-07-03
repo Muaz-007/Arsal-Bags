@@ -203,7 +203,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label>{type === "percent" ? "Percent off" : "Amount off (USD)"}</Label>
+                      <Label>{type === "percent" ? "Percent off" : "Amount off (PKR)"}</Label>
                       <Input
                         type="number"
                         value={value}

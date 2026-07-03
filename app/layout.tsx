@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   keywords: [
     "leather bags",
-    "handmade bags",
+    "premium bags",
     "tote",
     "backpack",
     "leather goods",

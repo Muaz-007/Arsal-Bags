@@ -31,8 +31,8 @@ const DEFAULT_SLIDES: Slide[] = [
     alt: "Florence Tote in cognac leather",
     tag: "Featured",
     name: "Florence Tote",
-    price: "$480",
-    tagline: "Hand-stitched in cognac full-grain leather.",
+    price: "Rs 48,000",
+    tagline: "Precision-crafted in cognac full-grain leather.",
   },
   {
     href: "/products/atelier-backpack-noir",
@@ -40,7 +40,7 @@ const DEFAULT_SLIDES: Slide[] = [
     alt: "Atelier Backpack in noir",
     tag: "New · Studio Daily",
     name: "Atelier Backpack",
-    price: "$620",
+    price: "Rs 62,000",
     tagline: "Quietly engineered for the studio commute.",
   },
   {
@@ -49,7 +49,7 @@ const DEFAULT_SLIDES: Slide[] = [
     alt: "Milano Shoulder in noir",
     tag: "Evening · Limited",
     name: "Milano Shoulder",
-    price: "$720",
+    price: "Rs 72,000",
     tagline: "Restrained Italian tailoring in leather.",
   },
   {
@@ -58,7 +58,7 @@ const DEFAULT_SLIDES: Slide[] = [
     alt: "Courier Crossbody in tan",
     tag: "Best seller · Crossbody",
     name: "Courier Crossbody",
-    price: "$340",
+    price: "Rs 34,000",
     tagline: "Built for the city, finished for the gallery.",
   },
 ];

@@ -53,7 +53,9 @@ export async function POST(req: Request) {
       },
     });
     const link = `${BASE_URL}/auth/reset?token=${token}`;
-    void sendPasswordReset(email, link);
+    // Await so Vercel serverless doesn't kill the SMTP request when the
+    // response returns. sendPasswordReset swallows errors internally.
+    await sendPasswordReset(email, link);
   }
 
   return NextResponse.json({ ok: true });

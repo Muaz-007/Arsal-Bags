@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const QA = [
   {
     q: "Where are your bags made?",
-    a: "Designed, cut, and stitched in our Lahore studio. Each piece is finished by one maker rather than assembled on a line.",
+    a: "Designed, cut, and finished in our Lahore studio. Every piece is quality-checked before it ships — no piece leaves with defective stitching, hardware, or lining.",
   },
   {
     q: "Is the leather full-grain?",

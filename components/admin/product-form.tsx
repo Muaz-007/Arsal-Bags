@@ -144,7 +144,7 @@ export function ProductForm({ initial }: { initial?: Product }) {
           </CardHeader>
           <CardContent className="grid sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="price">Price (USD)</Label>
+              <Label htmlFor="price">Price (PKR)</Label>
               <Input
                 id="price"
                 name="price"

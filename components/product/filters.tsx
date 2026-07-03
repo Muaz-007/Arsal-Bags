@@ -20,10 +20,10 @@ const CATEGORIES = [
 
 const PRICE_RANGES = [
   { value: "", label: "Any price" },
-  { value: "0-200", label: "Under $200" },
-  { value: "200-400", label: "$200 – $400" },
-  { value: "400-600", label: "$400 – $600" },
-  { value: "600-", label: "$600+" },
+  { value: "0-20000", label: "Under Rs 20,000" },
+  { value: "20000-40000", label: "Rs 20,000 – Rs 40,000" },
+  { value: "40000-60000", label: "Rs 40,000 – Rs 60,000" },
+  { value: "60000-", label: "Rs 60,000+" },
 ];
 
 /**

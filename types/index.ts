@@ -30,7 +30,7 @@ export interface Product {
   description: string;
   price: number;
   compareAt?: number;
-  currency: "USD";
+  currency: "PKR";
   category: Category;
   collection?: string;
   colors: string[];

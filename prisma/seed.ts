@@ -43,27 +43,30 @@ async function main() {
   }
 
   for (const p of PRODUCTS) {
+    // Re-seed updates the pricing + copy on existing rows too. Stock is
+    // deliberately excluded so re-seeding a live store doesn't overwrite
+    // the true on-hand count.
+    const data = {
+      slug: p.slug,
+      name: p.name,
+      tagline: p.tagline,
+      description: p.description,
+      price: p.price,
+      compareAt: p.compareAt,
+      currency: p.currency,
+      category: p.category,
+      collection: p.collection,
+      colors: p.colors,
+      materials: p.materials,
+      images: p.images,
+      featured: !!p.featured,
+      rating: p.rating,
+      reviewCount: p.reviewCount,
+    };
     await prisma.product.upsert({
       where: { slug: p.slug },
-      update: {},
-      create: {
-        slug: p.slug,
-        name: p.name,
-        tagline: p.tagline,
-        description: p.description,
-        price: p.price,
-        compareAt: p.compareAt,
-        currency: p.currency,
-        category: p.category,
-        collection: p.collection,
-        colors: p.colors,
-        materials: p.materials,
-        images: p.images,
-        stock: p.stock,
-        featured: !!p.featured,
-        rating: p.rating,
-        reviewCount: p.reviewCount,
-      },
+      update: data,
+      create: { ...data, stock: p.stock },
     });
   }
 

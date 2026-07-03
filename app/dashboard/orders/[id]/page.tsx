@@ -111,7 +111,9 @@ export default async function OrderDetailPage({
                   value={<span className="text-emerald-600">Free</span>}
                 />
               )}
-              <Row label="Tax" value={formatPrice(order.tax)} />
+              {order.tax > 0 && (
+                <Row label="Tax" value={formatPrice(order.tax)} />
+              )}
               <Row
                 label={<span className="font-display">Total</span>}
                 value={<span className="font-display">{formatPrice(order.total)}</span>}

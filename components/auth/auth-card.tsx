@@ -141,7 +141,7 @@ export function AuthCard({ initialMode }: { initialMode: Mode }) {
 
             <div className="relative flex items-center gap-2 text-xs text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-gold" />
-              Free shipping on every order over $250
+              Free delivery on orders over Rs 4,000
             </div>
           </div>
 

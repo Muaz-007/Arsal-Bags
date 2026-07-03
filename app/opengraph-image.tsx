@@ -58,7 +58,7 @@ export default function OGImage() {
               lineHeight: 1.35,
             }}
           >
-            Hand-stitched bags from a small studio in Lahore. Full-grain
+            Premium leather bags from a small studio in Lahore. Full-grain
             leather. Made in small batches.
           </div>
         </div>

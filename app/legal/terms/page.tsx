@@ -31,10 +31,11 @@ export default function TermsPage() {
 
       <ProseSection id="pricing" title="Pricing &amp; currency">
         <p>
-          All prices are in USD unless noted. Pakistani customers are billed in
-          PKR at the day's interbank rate. Import duties and taxes are
-          collected on delivery by the carrier and are not part of the order
-          total.
+          All prices are in Pakistani Rupees (PKR). For international orders,
+          the amount is converted at your card issuer's or courier's rate at
+          the time of payment. Import duties and taxes on international
+          shipments are collected on delivery by the carrier and are not
+          part of the order total.
         </p>
       </ProseSection>
 

@@ -97,7 +97,9 @@ export default async function AdminOrderDetailPage({
                   value={<span className="text-emerald-600">Free</span>}
                 />
               )}
-              <Row label="Tax" value={formatPrice(order.tax)} />
+              {order.tax > 0 && (
+                <Row label="Tax" value={formatPrice(order.tax)} />
+              )}
               <Row
                 label={<span className="font-display">Total</span>}
                 value={

@@ -91,7 +91,9 @@ export async function POST(req: Request) {
   });
 
   const link = `${BASE_URL}/auth/verify-email?token=${token}`;
-  void sendEmailChangeVerification(newEmail, link);
+  // Await so Vercel serverless doesn't kill the SMTP request when the
+  // response returns. sendEmailChangeVerification swallows errors internally.
+  await sendEmailChangeVerification(newEmail, link);
 
   return NextResponse.json({ ok: true });
 }

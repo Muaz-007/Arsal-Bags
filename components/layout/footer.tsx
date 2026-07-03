@@ -67,8 +67,8 @@ export function Footer() {
               BagsArt
             </div>
             <p className="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">
-              Quietly designed leather goods, built by hand in a small studio
-              in Lahore.
+              Quietly designed leather goods, made in a small studio in
+              Lahore.
             </p>
 
             <ul className="mt-5 space-y-2 text-sm">

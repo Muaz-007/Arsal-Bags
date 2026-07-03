@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { sendEmail } from "@/lib/email";
+import { sendContactMessage } from "@/lib/email";
 import {
   getClientIp,
   rateLimit,
@@ -32,11 +32,11 @@ export async function POST(req: Request) {
 
   const { name, email, subject, message } = parsed.data;
 
-  await sendEmail({
-    to: "bags.art.pk@gmail.com",
-    replyTo: email,
-    subject: `[Contact · ${subject}] ${name}`,
-    text: `From: ${name} <${email}>\nSubject: ${subject}\n\n${message}`,
+  await sendContactMessage("bags.art.pk@gmail.com", {
+    name,
+    email,
+    subject,
+    message,
   });
 
   return NextResponse.json({ ok: true });

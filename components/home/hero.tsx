@@ -62,8 +62,8 @@ export async function Hero() {
             for a quieter world.
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-lg leading-relaxed">
-            Full-grain leather, solid brass, and patient hand-stitching — the
-            kind of bag you carry for a decade and pass on for two more.
+            Full-grain leather, solid brass, and careful finishing — the
+            kind of bag you carry for years without a second thought.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -77,7 +77,7 @@ export async function Hero() {
 
           <div className="mt-12 grid grid-cols-3 max-w-md gap-6 text-sm">
             {[
-              { k: "Hand-stitched", v: "one piece at a time" },
+              { k: "Premium quality", v: "in every piece" },
               { k: "Full-grain", v: "leather, always" },
               { k: "Small batch", v: "made in Lahore" },
             ].map((s) => (

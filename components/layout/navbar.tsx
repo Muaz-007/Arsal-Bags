@@ -294,7 +294,7 @@ export function Navbar() {
                   )}
                 </Link>
                 <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.18em]">
-                  Free shipping over $250
+                  Free delivery over Rs 4,000
                 </p>
               </div>
             </motion.aside>

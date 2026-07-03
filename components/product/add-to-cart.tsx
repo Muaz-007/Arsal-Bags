@@ -96,7 +96,7 @@ export function AddToCart({ product }: { product: Product }) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Free shipping over $250 · Hand-stitched in Lahore
+        Free delivery over Rs 4,000 · Cash on delivery · Made in Lahore
       </p>
     </div>
   );

@@ -20,9 +20,11 @@ interface CartState {
   total: () => number;
 }
 
-const SHIPPING_FREE_THRESHOLD = 250;
-const SHIPPING_FEE = 15;
-const TAX_RATE = 0.08;
+// All amounts in PKR. Rs 250 shipping, waived on orders Rs 4,000+. No tax.
+// Keep mirrored with `app/api/checkout/route.ts` — the server recomputes
+// totals so client-side tampering can't change the charged amount.
+const SHIPPING_FEE = 250;
+const SHIPPING_FREE_THRESHOLD = 4000;
 
 export const useCart = create<CartState>()(
   persist(
@@ -75,12 +77,9 @@ export const useCart = create<CartState>()(
         if (sub <= 0) return 0;
         return sub >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FEE;
       },
-      tax: () => (get().subtotal() - get().discount()) * TAX_RATE,
+      tax: () => 0,
       total: () =>
-        Math.max(
-          0,
-          get().subtotal() - get().discount() + get().shipping() + get().tax()
-        ),
+        Math.max(0, get().subtotal() - get().discount() + get().shipping()),
     }),
     {
       name: "bagsart-cart",

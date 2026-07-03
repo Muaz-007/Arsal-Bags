@@ -37,10 +37,11 @@ export default async function AdminDashboard() {
     .sort((a, b) => a.stock - b.stock)
     .slice(0, 5);
   const outOfStock = products.filter((p) => p.stock === 0);
+  // `listUsers()` already returns rows ordered by createdAt DESC, so the
+  // first 3 customer entries are the most recent — no reverse needed.
   const newestCustomers = users
     .filter((u) => u.role === "customer")
-    .slice(-3)
-    .reverse();
+    .slice(0, 3);
 
   const avgOrderValue = stats.revenue / Math.max(stats.orders, 1);
 

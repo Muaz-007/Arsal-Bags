@@ -12,7 +12,7 @@ export default function ShippingPage() {
     <ProsePage
       eyebrow="Help"
       title="Shipping & returns"
-      intro="Every piece is finished by hand and shipped from our Lahore studio. Here's what to expect after you place an order."
+      intro="Every piece is quality-checked and shipped from our Lahore studio. Here's what to expect after you place an order."
     >
       <ProseSection id="lead-times" title="Lead times">
         <p>
@@ -30,10 +30,11 @@ export default function ShippingPage() {
 
       <ProseSection id="costs" title="Costs">
         <p>
-          Domestic shipping is a flat <strong>PKR 500</strong>. International
-          DHL is <strong>$15</strong> per order, free over <strong>$250</strong>.
-          Duties and import taxes are collected by the carrier on delivery and
-          are not included in your order total.
+          Domestic shipping is a flat <strong>Rs 250</strong> per order —
+          <strong> free on orders over Rs 4,000</strong>. No tax is added at
+          checkout. For international orders we quote a DHL rate at checkout;
+          duties and import taxes are collected by the carrier on delivery
+          and are not included in your order total.
         </p>
       </ProseSection>
 
