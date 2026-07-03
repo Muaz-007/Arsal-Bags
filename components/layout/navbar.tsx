@@ -213,31 +213,35 @@ export function Navbar() {
 
                 {authed ? (
                   <ul className="space-y-1">
-                    <DrawerLink
-                      href="/dashboard"
-                      icon={Package}
-                      label="My orders"
-                      onClose={() => setOpen(false)}
-                    />
-                    <DrawerLink
-                      href="/wishlist"
-                      icon={Heart}
-                      label="Wishlist"
-                      onClose={() => setOpen(false)}
-                    />
-                    <DrawerLink
-                      href="/dashboard/profile"
-                      icon={SettingsIcon}
-                      label="Profile"
-                      onClose={() => setOpen(false)}
-                    />
-                    {isAdmin && (
+                    {isAdmin ? (
+                      // Admins don't shop — they only need the panel.
                       <DrawerLink
                         href="/admin"
                         icon={Shield}
                         label="Admin panel"
                         onClose={() => setOpen(false)}
                       />
+                    ) : (
+                      <>
+                        <DrawerLink
+                          href="/dashboard"
+                          icon={Package}
+                          label="My orders"
+                          onClose={() => setOpen(false)}
+                        />
+                        <DrawerLink
+                          href="/wishlist"
+                          icon={Heart}
+                          label="Wishlist"
+                          onClose={() => setOpen(false)}
+                        />
+                        <DrawerLink
+                          href="/dashboard/profile"
+                          icon={SettingsIcon}
+                          label="Profile"
+                          onClose={() => setOpen(false)}
+                        />
+                      </>
                     )}
                   </ul>
                 ) : (
@@ -265,7 +269,8 @@ export function Navbar() {
                 <ThemeRow />
               </nav>
 
-              {/* Drawer footer — Logout when authed, View bag otherwise */}
+              {/* Drawer footer — Logout when authed, plus a primary CTA.
+                  Admins get "Go to admin"; everyone else gets "View bag". */}
               <div className="border-t border-border p-5 space-y-3">
                 {authed && (
                   <button
@@ -280,22 +285,35 @@ export function Navbar() {
                     Logout
                   </button>
                 )}
-                <Link
-                  href="/cart"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full h-11 rounded-md bg-gold text-black font-medium text-sm hover:bg-gold-light transition"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  View bag
-                  {totalItems > 0 && (
-                    <span className="ml-1 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-black text-gold text-[11px]">
-                      {totalItems}
-                    </span>
-                  )}
-                </Link>
-                <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.18em]">
-                  Free delivery over Rs 4,000
-                </p>
+                {isAdmin ? (
+                  <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full h-11 rounded-md bg-gold text-black font-medium text-sm hover:bg-gold-light transition"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Go to admin
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/cart"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full h-11 rounded-md bg-gold text-black font-medium text-sm hover:bg-gold-light transition"
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      View bag
+                      {totalItems > 0 && (
+                        <span className="ml-1 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-black text-gold text-[11px]">
+                          {totalItems}
+                        </span>
+                      )}
+                    </Link>
+                    <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.18em]">
+                      Free delivery over Rs 4,000
+                    </p>
+                  </>
+                )}
               </div>
             </motion.aside>
           </>

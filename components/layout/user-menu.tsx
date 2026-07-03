@@ -111,46 +111,54 @@ export function UserMenu() {
               )}
             </div>
 
-            {/* Mobile (sm only): just profile. The hamburger drawer carries
-                the full list, so we don't duplicate it here. */}
-            <ul className="md:hidden p-1.5">
-              <MenuLink
-                href="/dashboard/profile"
-                icon={SettingsIcon}
-                label="Profile"
-                onClose={() => setOpen(false)}
-              />
-            </ul>
-
-            {/* Desktop (md+): full list. */}
-            <ul className="hidden md:block p-1.5">
-              <MenuLink
-                href="/dashboard/profile"
-                icon={SettingsIcon}
-                label="Profile"
-                onClose={() => setOpen(false)}
-              />
-              <MenuLink
-                href="/dashboard"
-                icon={Package}
-                label="My orders"
-                onClose={() => setOpen(false)}
-              />
-              <MenuLink
-                href="/wishlist"
-                icon={Heart}
-                label="Wishlist"
-                onClose={() => setOpen(false)}
-              />
-              {isAdmin && (
+            {/* Admins don't shop, so we hide the customer-only entries and
+                point them straight at the admin panel. Non-admins get the
+                usual customer account list. */}
+            {isAdmin ? (
+              <ul className="p-1.5">
                 <MenuLink
                   href="/admin"
                   icon={Shield}
                   label="Admin panel"
                   onClose={() => setOpen(false)}
                 />
-              )}
-            </ul>
+              </ul>
+            ) : (
+              <>
+                {/* Mobile (sm only): just profile. The hamburger drawer
+                    carries the full list, so we don't duplicate it here. */}
+                <ul className="md:hidden p-1.5">
+                  <MenuLink
+                    href="/dashboard/profile"
+                    icon={SettingsIcon}
+                    label="Profile"
+                    onClose={() => setOpen(false)}
+                  />
+                </ul>
+
+                {/* Desktop (md+): full customer list. */}
+                <ul className="hidden md:block p-1.5">
+                  <MenuLink
+                    href="/dashboard/profile"
+                    icon={SettingsIcon}
+                    label="Profile"
+                    onClose={() => setOpen(false)}
+                  />
+                  <MenuLink
+                    href="/dashboard"
+                    icon={Package}
+                    label="My orders"
+                    onClose={() => setOpen(false)}
+                  />
+                  <MenuLink
+                    href="/wishlist"
+                    icon={Heart}
+                    label="Wishlist"
+                    onClose={() => setOpen(false)}
+                  />
+                </ul>
+              </>
+            )}
 
             {/* Logout — always last */}
             <div className="border-t border-border p-1.5">

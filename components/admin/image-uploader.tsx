@@ -139,7 +139,7 @@ export function ImageUploader({
           value={urlInput}
           onChange={(e) => setUrlInput(e.target.value)}
           placeholder="Or paste an image URL"
-          className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+          className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm transition-colors dark:border-gold/40 dark:hover:border-gold/60 dark:focus:border-gold-dark focus:outline-none"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();

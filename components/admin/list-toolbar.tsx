@@ -83,6 +83,8 @@ export function ListToolbar({
           placeholder={searchPlaceholder}
           className={cn(
             "w-full h-10 rounded-md border border-input bg-background pl-9 pr-9 text-sm",
+            "transition-colors",
+            "dark:border-gold/40 dark:hover:border-gold/60 dark:focus:border-gold-dark",
             "focus:outline-none focus:ring-1 focus:ring-ring"
           )}
         />

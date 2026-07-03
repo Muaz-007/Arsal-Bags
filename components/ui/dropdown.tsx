@@ -141,6 +141,9 @@ export function Dropdown({
         className={cn(
           "inline-flex w-full items-center justify-between gap-2",
           "h-10 px-3 rounded-md border border-input bg-background text-sm",
+          // Match the form-field gold treatment in dark mode (see input.tsx).
+          "dark:border-gold/40 dark:hover:border-gold/60",
+          open && "dark:border-gold-dark",
           "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           "transition-colors",
           triggerClassName
