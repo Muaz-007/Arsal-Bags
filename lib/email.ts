@@ -2,8 +2,12 @@ import nodemailer, { type Transporter } from "nodemailer";
 import {
   contactMessageTemplate,
   emailChangeTemplate,
+  orderCancelledAdminTemplate,
+  orderCancelledCustomerTemplate,
   orderConfirmationTemplate,
+  passwordChangedTemplate,
   passwordResetTemplate,
+  verificationCodeTemplate,
   welcomeTemplate,
 } from "@/lib/email-templates";
 
@@ -119,6 +123,9 @@ export async function sendOrderConfirmation(
     customerName: string;
     total: number;
     items: { name: string; quantity: number }[];
+    /** Present for guest-checkout orders — displayed at the top of the
+     *  email so the customer can sign in and track their order. */
+    guestPassword?: string;
   }
 ) {
   const { html, text } = orderConfirmationTemplate(order);
@@ -145,6 +152,67 @@ export async function sendEmailChangeVerification(to: string, link: string) {
   return sendEmail({
     to,
     subject: "Confirm your new BagsArt email",
+    html,
+    text,
+  });
+}
+
+export async function sendVerificationCode(
+  to: string,
+  name: string,
+  code: string
+) {
+  const { html, text } = verificationCodeTemplate({ name, code });
+  return sendEmail({
+    to,
+    subject: `Your BagsArt verification code: ${code}`,
+    html,
+    text,
+  });
+}
+
+export async function sendOrderCancelledCustomer(
+  to: string,
+  order: {
+    id: string;
+    customerName: string;
+    total: number;
+    items: { name: string; quantity: number }[];
+  }
+) {
+  const { html, text } = orderCancelledCustomerTemplate(order);
+  return sendEmail({
+    to,
+    subject: `Order cancelled · ${order.id}`,
+    html,
+    text,
+  });
+}
+
+export async function sendOrderCancelledAdmin(
+  to: string,
+  order: {
+    id: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    itemCount: number;
+  }
+) {
+  const { html, text } = orderCancelledAdminTemplate(order);
+  return sendEmail({
+    to,
+    subject: `[Cancelled] ${order.id} · ${order.customerName}`,
+    html,
+    text,
+  });
+}
+
+export async function sendPasswordChangedConfirmation(to: string, name: string) {
+  const { html, text } = passwordChangedTemplate(name);
+  return sendEmail({
+    to,
+    subject: "Your BagsArt password was updated",
     html,
     text,
   });

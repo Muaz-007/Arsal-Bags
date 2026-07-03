@@ -166,10 +166,14 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Collection CTA — closes the About page with a clear route to shop */}
+      {/* Collection CTA — always a dark band regardless of theme.
+          `bg-foreground` inverts in dark mode (becomes light), which flipped
+          the whole section to cream on customer screens — use a fixed dark
+          shade + fixed light text so this always reads as a premium closing
+          band on both light and dark. */}
       <section
         id="collection"
-        className="border-y border-border bg-foreground text-background py-24 relative overflow-hidden"
+        className="border-y border-border bg-neutral-950 text-neutral-50 py-24 relative overflow-hidden"
       >
         <div className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full bg-gold/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
@@ -183,7 +187,7 @@ export default function AboutPage() {
               See the bags in{" "}
               <span className="text-gradient-gold">their element</span>.
             </h2>
-            <p className="mt-6 text-background/75 leading-relaxed">
+            <p className="mt-6 text-neutral-300 leading-relaxed">
               Totes for the everyday, backpacks for the commute, clutches for
               the evening — full-grain leather across every silhouette. Have
               a look and choose the one that fits your day.
@@ -196,7 +200,7 @@ export default function AboutPage() {
                 href="/contact"
                 variant="outline"
                 size="lg"
-                className="border-background/30 text-background hover:bg-background/10"
+                className="border-neutral-50/30 text-neutral-50 hover:bg-neutral-50/10"
               >
                 Talk to us
               </Button>

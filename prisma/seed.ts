@@ -19,25 +19,31 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    // Ensure existing rows have emailVerified set so a re-seed against a
+    // live DB doesn't accidentally lock the admin out after we shipped
+    // the "verify email before login" gate.
+    update: { emailVerified: new Date() },
     create: {
       name: "BagsArt Admin",
       email: adminEmail,
       passwordHash,
       role: "admin",
+      emailVerified: new Date(),
     },
   });
 
-  // Seed additional sample customer accounts (passwords default to "password")
+  // Seed additional sample customer accounts (passwords default to "password").
+  // Marked as verified so demo / test accounts can log in immediately.
   for (const u of USERS.filter((x) => x.role !== "admin")) {
     await prisma.user.upsert({
       where: { email: u.email },
-      update: {},
+      update: { emailVerified: new Date() },
       create: {
         name: u.name,
         email: u.email,
         passwordHash: await bcrypt.hash("password", 10),
         role: "customer",
+        emailVerified: new Date(),
       },
     });
   }

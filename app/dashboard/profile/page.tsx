@@ -1,4 +1,5 @@
 import { AddressBook } from "@/components/dashboard/address-book";
+import { PasswordForm } from "@/components/dashboard/password-form";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { requireUser } from "@/lib/auth-server";
 
@@ -30,6 +31,11 @@ export default async function ProfilePage() {
           initialEmail={user.email ?? ""}
           provider={user.provider}
         />
+      </section>
+
+      <section className="space-y-5">
+        <h2 className="font-display text-2xl">Password</h2>
+        <PasswordForm provider={user.provider} />
       </section>
 
       <AddressBook />

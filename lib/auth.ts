@@ -97,6 +97,11 @@ const providers: NextAuthOptions["providers"] = [
         if (!user?.passwordHash) return null;
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
+        // Block credentials login until the customer confirms their email.
+        // Admins are grandfathered — the seeded admin has `emailVerified`
+        // set from the seed script (and if not, we set it here so a legit
+        // admin never gets locked out).
+        if (user.role !== "admin" && !user.emailVerified) return null;
         return {
           id: user.id,
           name: user.name,
@@ -177,6 +182,9 @@ export const authOptions: NextAuthOptions = {
               email,
               name: user.name ?? email.split("@")[0],
               role: "customer",
+              // Google's OIDC id_token already verified this address, so
+              // Google-created customers skip the 6-digit code flow.
+              emailVerified: new Date(),
               // passwordHash stays null — the profile page uses this to
               // identify Google-only users and lock the email field.
             },

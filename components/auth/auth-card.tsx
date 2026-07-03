@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -247,6 +247,7 @@ const inputClass =
 
 function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   const router = useRouter();
+  const params = useSearchParams();
   const push = useToast((s) => s.push);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
@@ -254,6 +255,9 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   // Controlled password input so we can clear it after a failed attempt
   // (security: never echo back the password the user just got wrong).
   const [password, setPassword] = useState("");
+  // Prefilled from ?email= when the user is bounced here after verifying.
+  const prefilledEmail = params.get("email") ?? "";
+  const justVerified = params.get("verified") === "1";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -295,6 +299,11 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
         <h1 className="mt-3 font-display text-3xl sm:text-4xl tracking-tight leading-tight">
           Sign in to your <span className="text-gradient-gold">atelier.</span>
         </h1>
+        {justVerified && (
+          <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+            Email verified — sign in with your password to continue.
+          </div>
+        )}
         <p className="mt-2 text-sm text-muted-foreground">
           Track orders, save favorites, and check out faster.
         </p>
@@ -311,6 +320,7 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
               type="email"
               autoComplete="email"
               required
+              defaultValue={prefilledEmail}
               placeholder="you@studio.com"
               className={inputClass}
             />
@@ -419,25 +429,26 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
+      const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        const { error } = await res
-          .json()
-          .catch(() => ({ error: "Could not sign up" }));
-        push({ title: "Sign-up failed", description: error, tone: "error" });
+        push({
+          title: "Sign-up failed",
+          description: data?.error ?? "Could not sign up",
+          tone: "error",
+        });
         return;
       }
-      await signIn("credentials", {
-        email: payload.email,
-        password: payload.password,
-        redirect: false,
-      });
+      // Every new account now goes through email verification. We route
+      // to /auth/verify-signup with the email prefilled so the user just
+      // types the 6-digit code we just emailed them.
       push({
-        title: "Welcome to BagsArt",
-        description: "Your account is set up — keep browsing.",
+        title: "Check your inbox",
+        description: `We sent a 6-digit code to ${data.email ?? payload.email}.`,
         tone: "success",
       });
-      router.push("/");
-      router.refresh();
+      router.push(
+        `/auth/verify-signup?email=${encodeURIComponent(String(data.email ?? payload.email ?? ""))}`
+      );
     } finally {
       setLoading(false);
     }

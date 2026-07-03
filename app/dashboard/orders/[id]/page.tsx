@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Truck } from "lucide-react";
+import { ArrowLeft, ExternalLink, Truck, XCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth-server";
 import { getOrderById } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/dashboard/order-timeline";
+import { CancelOrderButton } from "@/components/dashboard/cancel-order-button";
 import { formatDate, formatPrice } from "@/lib/utils";
 
 export default async function OrderDetailPage({
@@ -173,6 +174,23 @@ export default async function OrderDetailPage({
               </div>
             </CardContent>
           </Card>
+
+          {order.status === "pending" && (
+            <CancelOrderButton orderId={order.id} />
+          )}
+
+          {order.status === "cancelled" && (
+            <div className="rounded-2xl border border-border bg-muted/30 p-5 flex gap-3 items-start">
+              <XCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Order cancelled</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Items were released back into stock and nothing was charged.
+                  Feel free to place a new order any time.
+                </p>
+              </div>
+            </div>
+          )}
 
           <Button href="/contact" variant="outline" className="w-full">
             Need help with this order?

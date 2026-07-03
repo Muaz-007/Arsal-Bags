@@ -13,6 +13,7 @@ import { useCart } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { SavedAddressPicker } from "@/components/checkout/saved-address-picker";
+import { GuestVerifyModal } from "@/components/checkout/guest-verify-modal";
 import type { SavedAddress } from "@/types/address";
 
 export default function CheckoutPage() {
@@ -35,6 +36,24 @@ export default function CheckoutPage() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("cod");
 
+  // Guest verification modal state — populated the moment an
+  // unauthenticated buyer submits the form. The captured `pendingOrder`
+  // holds the exact payload we'll re-post to /api/checkout once the
+  // customer enters their 6-digit code.
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [pendingOrder, setPendingOrder] = useState<null | {
+    customer: {
+      name: string;
+      email: string;
+      address: string;
+      city: string;
+      country: string;
+      postal: string;
+    };
+    couponCode?: string;
+  }>(null);
+
   function pickSaved(a: SavedAddress) {
     setSelected(a);
     setNewMode(false);
@@ -43,6 +62,64 @@ export default function CheckoutPage() {
   function useNew() {
     setSelected(null);
     setNewMode(true);
+  }
+
+  /**
+   * Runs after the guest's code has been verified — reposts the captured
+   * order payload with `verificationCode` added, then finalises the same
+   * post-checkout side effects (address save, cart clear, redirect).
+   *
+   * Also used directly by authed customers via `onSubmit`, in which case
+   * `verificationCode` is omitted and the server takes the auth-only path.
+   */
+  async function placeOrder(
+    payloadBase: {
+      customer: {
+        name: string;
+        email: string;
+        address: string;
+        city: string;
+        country: string;
+        postal: string;
+      };
+      couponCode?: string;
+    },
+    verificationCode?: string
+  ) {
+    const body = {
+      ...payloadBase,
+      items: lines,
+      paymentMethod,
+      ...(verificationCode ? { verificationCode } : {}),
+    };
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error ?? "Checkout failed");
+    }
+    const data = await res.json();
+
+    // Save the new address for next time (auth users only).
+    if (authed && !selected && saveAddress) {
+      await fetch("/api/addresses", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: payloadBase.customer.name,
+          address: payloadBase.customer.address,
+          city: payloadBase.customer.city,
+          country: payloadBase.customer.country,
+          postal: payloadBase.customer.postal,
+        }),
+      }).catch(() => null);
+    }
+
+    clear();
+    router.push(`/checkout/success?order=${data.id}`);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -61,50 +138,42 @@ export default function CheckoutPage() {
           postal: selected.postal,
         }
       : {
-          name: form.get("name"),
-          email: form.get("email"),
-          address: form.get("address"),
-          city: form.get("city"),
-          country: form.get("country"),
-          postal: form.get("postal"),
+          name: String(form.get("name") ?? ""),
+          email: String(form.get("email") ?? ""),
+          address: String(form.get("address") ?? ""),
+          city: String(form.get("city") ?? ""),
+          country: String(form.get("country") ?? ""),
+          postal: String(form.get("postal") ?? ""),
         };
 
-    const payload = {
-      customer: address,
-      items: lines,
-      couponCode: coupon?.code,
-      paymentMethod,
-    };
+    const payloadBase = { customer: address, couponCode: coupon?.code };
 
     try {
-      const res = await fetch("/api/checkout", {
+      // Authenticated buyers → straight through to the order.
+      if (authed) {
+        await placeOrder(payloadBase);
+        return;
+      }
+
+      // Guests → email a verification code first, then open the modal.
+      const initRes = await fetch("/api/checkout/verify-init", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ name: address.name, email: address.email }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error ?? "Checkout failed");
+      const initData = await initRes.json().catch(() => ({}));
+      if (!initRes.ok) {
+        push({
+          title: "Couldn't send verification code",
+          description:
+            initData?.error ?? "Please check your email and try again.",
+          tone: "error",
+        });
+        return;
       }
-      const data = await res.json();
-
-      // Save the new address for next time, if the user opted in.
-      if (authed && !selected && saveAddress) {
-        await fetch("/api/addresses", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            name: address.name,
-            address: address.address,
-            city: address.city,
-            country: address.country,
-            postal: address.postal,
-          }),
-        }).catch(() => null);
-      }
-
-      clear();
-      router.push(`/checkout/success?order=${data.id}`);
+      setPendingOrder(payloadBase);
+      setVerifyEmail(address.email);
+      setVerifyOpen(true);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Please try again.";
@@ -112,6 +181,40 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * Called by <GuestVerifyModal> when the customer enters a 6-digit code.
+   * Reposts the pending order payload with the code attached — server
+   * validates it and creates the order in the same request.
+   */
+  async function onVerified(code: string) {
+    if (!pendingOrder) return;
+    setLoading(true);
+    try {
+      await placeOrder(pendingOrder, code);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Please try again.";
+      push({
+        title: "Couldn't place order",
+        description: message,
+        tone: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendGuestCode() {
+    if (!pendingOrder) return;
+    await fetch("/api/checkout/verify-init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: pendingOrder.customer.name,
+        email: pendingOrder.customer.email,
+      }),
+    });
   }
 
   if (lines.length === 0) {
@@ -335,6 +438,19 @@ export default function CheckoutPage() {
           </div>
         </dl>
       </aside>
+
+      <GuestVerifyModal
+        open={verifyOpen}
+        email={verifyEmail}
+        submitting={loading}
+        onClose={() => {
+          if (loading) return;
+          setVerifyOpen(false);
+          setPendingOrder(null);
+        }}
+        onVerified={onVerified}
+        onResend={resendGuestCode}
+      />
     </div>
   );
 }
