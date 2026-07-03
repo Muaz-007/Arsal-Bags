@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" shape-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0b0c"/>
+      <stop offset="1" stop-color="#1a1614"/>
+    </linearGradient>
+    <radialGradient id="dot" cx="0.38" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#F2D57E"/>
+      <stop offset="0.55" stop-color="#C9A961"/>
+      <stop offset="1" stop-color="#8C7233"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#C9A961" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#C9A961" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Full-bleed background: iOS auto-masks with its own corner radius, so
+       we don't round the SVG ourselves. -->
+  <rect width="180" height="180" fill="url(#bg)"/>
+
+  <!-- Halo -->
+  <circle cx="90" cy="86" r="56" fill="url(#halo)"/>
+
+  <!-- Gold dot with warm highlight -->
+  <circle cx="90" cy="86" r="30" fill="url(#dot)"/>
+  <circle cx="82" cy="78" r="7" fill="#FFF7DC" fill-opacity="0.55"/>
+
+  <!-- Horizon line -->
+  <line x1="52" y1="132" x2="128" y2="132"
+        stroke="#C9A961" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Wordmark under the dot -->
+  <text x="90" y="158" text-anchor="middle"
+        font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="600"
+        fill="#fafaf7" letter-spacing="2">BAGSART</text>
+</svg>

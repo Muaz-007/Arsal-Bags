@@ -67,9 +67,8 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  // Icons are auto-discovered from `app/icon.svg` + `app/apple-icon.svg`
+  // by Next.js — no explicit `icons:` block needed.
 };
 
 const organizationJsonLd = {

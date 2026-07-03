@@ -1,5 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#0b0b0c"/>
-  <circle cx="16" cy="16" r="5" fill="#C9A961"/>
-  <circle cx="16" cy="16" r="9" fill="none" stroke="#C9A961" stroke-opacity="0.45" stroke-width="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="geometricPrecision">
+  <defs>
+    <!-- Warm dark background gradient (matches the OG image) -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0b0c"/>
+      <stop offset="1" stop-color="#1a1614"/>
+    </linearGradient>
+    <!-- Gold radial for the dot: warm highlight in the top-left, deep gold at edge -->
+    <radialGradient id="dot" cx="0.38" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#F2D57E"/>
+      <stop offset="0.55" stop-color="#C9A961"/>
+      <stop offset="1" stop-color="#8C7233"/>
+    </radialGradient>
+    <!-- Soft halo behind the dot -->
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#C9A961" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#C9A961" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+
+  <!-- Subtle inner top highlight so the tile has a bit of dimension -->
+  <rect x="1" y="1" width="30" height="30" rx="6" fill="none"
+        stroke="#ffffff" stroke-opacity="0.06"/>
+
+  <!-- Gold halo behind the dot -->
+  <circle cx="16" cy="16" r="10" fill="url(#halo)"/>
+
+  <!-- The dot: solid, warm, with a highlight -->
+  <circle cx="16" cy="16" r="5.2" fill="url(#dot)"/>
+
+  <!-- Tiny specular highlight — sells the "polished" look -->
+  <circle cx="14.5" cy="14.5" r="1.2" fill="#FFF7DC" fill-opacity="0.55"/>
+
+  <!-- Thin horizon line under the dot — echoes the gold rule in our
+       email templates + gives the mark a brand-signature detail -->
+  <line x1="8.5" y1="23.5" x2="23.5" y2="23.5"
+        stroke="#C9A961" stroke-opacity="0.55" stroke-width="0.7" stroke-linecap="round"/>
 </svg>
