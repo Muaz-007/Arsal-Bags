@@ -168,10 +168,6 @@ export default function CartPage() {
             Apply
           </Button>
         </form>
-        <p className="text-xs text-muted-foreground -mt-3">
-          Try <code className="font-mono">WELCOME10</code> or{" "}
-          <code className="font-mono">STUDIO25</code>.
-        </p>
 
         <dl className="space-y-2.5 text-sm">
           <div className="flex justify-between">

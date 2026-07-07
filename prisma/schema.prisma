@@ -173,6 +173,10 @@ model Order {
   userId         String?
   customerName   String
   customerEmail  String
+  // Contact phone captured at checkout so the courier / studio can reach
+  // the customer without opening the account record. Optional so orders
+  // from the pre-phone era don't need a backfill.
+  customerPhone  String?
   subtotal       Decimal     @db.Decimal(10, 2)
   shipping       Decimal     @db.Decimal(10, 2) @default(0)
   tax            Decimal     @db.Decimal(10, 2) @default(0)

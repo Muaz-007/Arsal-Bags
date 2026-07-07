@@ -11,11 +11,21 @@ import { getCurrentUser } from "@/lib/auth-server";
  * out of sync with the underlying reviews.
  */
 
+// Same Cloudinary-only allowlist as the POST endpoint — an edit shouldn't
+// be a back-door for hostile URLs the create path already rejects.
+const cloudinaryUrl = z
+  .string()
+  .url()
+  .refine(
+    (v) => /^https:\/\/res\.cloudinary\.com\//i.test(v),
+    { message: "Only Cloudinary URLs are allowed" }
+  );
+
 const PatchSchema = z.object({
   rating: z.number().int().min(1).max(5),
   title: z.string().min(2).max(120),
   body: z.string().min(8).max(2000),
-  images: z.array(z.string().url()).max(3).default([]),
+  images: z.array(cloudinaryUrl).max(3).default([]),
 });
 
 async function loadReviewForActor(id: string, actorId: string, isAdmin: boolean) {

@@ -8,6 +8,7 @@ import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { WishlistFab } from "@/components/layout/wishlist-fab";
 import { WishlistSync } from "@/components/layout/wishlist-sync";
+import { CookieBanner } from "@/components/layout/cookie-banner";
 import { ToastViewport } from "@/components/ui/toast";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -146,6 +147,7 @@ export default function RootLayout({
           <WishlistFab />
           <ScrollToTop />
           <WishlistSync />
+          <CookieBanner />
           <ToastViewport />
         </Providers>
       </body>

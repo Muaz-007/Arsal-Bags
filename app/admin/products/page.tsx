@@ -150,6 +150,7 @@ export default async function AdminProductsPage({
                         <Link
                           href={`/products/${p.slug}`}
                           target="_blank"
+                          rel="noopener noreferrer"
                           aria-label="View live"
                           title="View on store"
                           className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted text-muted-foreground transition"

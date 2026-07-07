@@ -120,6 +120,16 @@ export default async function AdminOrderDetailPage({
               <p className="text-xs text-muted-foreground">
                 {order.customerEmail}
               </p>
+              {order.customerPhone && (
+                <p className="text-xs mt-2">
+                  <a
+                    href={`tel:${order.customerPhone}`}
+                    className="text-gold-dark dark:text-gold-light hover:underline decoration-gold underline-offset-4 font-mono"
+                  >
+                    {order.customerPhone}
+                  </a>
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -182,7 +192,10 @@ export default async function AdminOrderDetailPage({
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">
                 Current status
               </p>
-              <OrderTimeline status={order.status} />
+              <OrderTimeline
+                status={order.status}
+                paymentMethod={order.paymentMethod}
+              />
             </CardContent>
           </Card>
         </div>

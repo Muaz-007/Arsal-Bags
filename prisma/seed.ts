@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "bags.art.pk@gmail.com";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   await prisma.user.upsert({
     where: { email: adminEmail },
@@ -41,7 +41,7 @@ async function main() {
       create: {
         name: u.name,
         email: u.email,
-        passwordHash: await bcrypt.hash("password", 10),
+        passwordHash: await bcrypt.hash("password", 12),
         role: "customer",
         emailVerified: new Date(),
       },

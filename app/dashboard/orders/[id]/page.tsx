@@ -130,7 +130,10 @@ export default async function OrderDetailPage({
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">
                 Status
               </p>
-              <OrderTimeline status={order.status} />
+              <OrderTimeline
+                status={order.status}
+                paymentMethod={order.paymentMethod}
+              />
             </CardContent>
           </Card>
 
@@ -142,11 +145,15 @@ export default async function OrderDetailPage({
                   Tracking
                 </p>
                 <p className="font-mono text-sm">{order.trackingNumber}</p>
-                {order.trackingUrl ? (
+                {order.trackingUrl && /^https?:\/\//i.test(order.trackingUrl) ? (
+                  // Belt-and-braces: the admin API also refuses any URL that
+                  // isn't http/https, but we double-check here so a legacy
+                  // row from before the guard can't render a `javascript:`
+                  // link on the customer's order page.
                   <Link
                     href={order.trackingUrl}
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs text-gold-dark dark:text-gold-light hover:underline decoration-gold underline-offset-4"
                   >
                     Track with courier
@@ -171,6 +178,11 @@ export default async function OrderDetailPage({
                 <p className="text-xs text-muted-foreground">
                   {order.customerEmail}
                 </p>
+                {order.customerPhone && (
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">
+                    {order.customerPhone}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

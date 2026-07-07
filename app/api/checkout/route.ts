@@ -19,6 +19,25 @@ const Schema = z.object({
   customer: z.object({
     name: z.string().min(1),
     email: z.string().email(),
+    // Pakistani mobile number. Accepts both local (`03XXXXXXXXX` — 11
+    // digits) and international (`+923XXXXXXXXX` — plus sign followed by
+    // 12 digits) formats, ignoring any spaces / dashes / brackets in
+    // between. Anything else is rejected — we only ship inside Pakistan,
+    // so a foreign-looking number is almost always a typo.
+    phone: z
+      .string()
+      .trim()
+      .max(30)
+      .refine(
+        (v) => {
+          const compact = v.replace(/[\s\-()]/g, "");
+          return /^(\+923\d{9}|03\d{9})$/.test(compact);
+        },
+        {
+          message:
+            "Enter a Pakistani mobile number (03XXXXXXXXX or +923XXXXXXXXX)",
+        }
+      ),
     address: z.string().min(1),
     city: z.string().min(1),
     country: z.string().min(1),
@@ -45,6 +64,19 @@ const SHIPPING_FEE = 250;
 const SHIPPING_FREE_THRESHOLD = 4000;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Strip everything but digits and the leading `+` so the phone we persist
+ * looks identical whether the customer typed "0300 123 4567" or
+ * "03001234567" or "+92 300 1234567" — admin lookups and courier
+ * hand-offs stay consistent.
+ */
+function normalizePhone(raw: string): string {
+  const compact = raw.replace(/[\s\-()]/g, "");
+  // If they typed a local number, keep the local form as-is. If they
+  // used +92, keep the leading + and digits only.
+  return compact;
+}
 
 // Distinct error class so the outer catch can tell an expected "out of stock"
 // case (safe to surface) from a Prisma/runtime failure (must be redacted).
@@ -223,6 +255,7 @@ export async function POST(req: Request) {
             userId: me?.id ?? guestUserId,
             customerName: customer.name,
             customerEmail: customer.email,
+            customerPhone: normalizePhone(customer.phone),
             subtotal,
             shipping,
             tax,

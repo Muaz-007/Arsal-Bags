@@ -24,12 +24,12 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 export async function POST(req: Request) {
   // 3 reset requests per IP per 15 minutes is plenty for legitimate users.
   const ip = getClientIp(req);
-  const limit = await rateLimit({
+  const ipLimit = await rateLimit({
     key: `forgot:${ip}`,
     max: 3,
     windowMs: 15 * 60_000,
   });
-  if (!limit.ok) return rateLimitedResponse(limit);
+  if (!ipLimit.ok) return rateLimitedResponse(ipLimit);
 
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);
@@ -37,6 +37,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true }); // silent fail
   }
   const email = parsed.data.email.toLowerCase().trim();
+
+  // Per-email throttle sits on top of the per-IP one so an attacker who
+  // cycles IPs still can't flood a single victim's inbox with reset
+  // emails, and can't burn through our SMTP budget on one address.
+  // Silent-fail response is identical to the happy path so the caller
+  // learns nothing about whether the email is registered.
+  const emailLimit = await rateLimit({
+    key: `forgot-email:${email}`,
+    max: 3,
+    windowMs: 60 * 60_000,
+  });
+  if (!emailLimit.ok) return NextResponse.json({ ok: true });
 
   if (!prisma) {
     return NextResponse.json({ ok: true });

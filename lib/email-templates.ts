@@ -508,6 +508,7 @@ export function orderCancelledAdminTemplate(order: {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   total: number;
   itemCount: number;
   reason?: string;
@@ -534,6 +535,13 @@ export function orderCancelledAdminTemplate(order: {
             <p style="margin:0 0 4px;font-size:13px;color:${TEXT};">
               <strong>${escape(order.customerName)}</strong> · <a href="mailto:${escape(order.customerEmail)}" style="color:${GOLD_DARK};text-decoration:none;">${escape(order.customerEmail)}</a>
             </p>
+            ${
+              order.customerPhone
+                ? `<p style="margin:0 0 4px;font-size:13px;color:${TEXT};">
+              <a href="tel:${escape(order.customerPhone)}" style="color:${GOLD_DARK};text-decoration:none;font-family:'SF Mono',Menlo,Consolas,monospace;">${escape(order.customerPhone)}</a>
+            </p>`
+                : ""
+            }
             <p style="margin:0;font-size:13px;color:${TEXT_MUTED};">
               ${order.itemCount} item${order.itemCount === 1 ? "" : "s"} · ${formattedTotal}
             </p>

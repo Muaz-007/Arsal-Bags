@@ -69,6 +69,7 @@ export interface Order {
   userId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string | null;
   items: CartLine[];
   subtotal: number;
   shipping: number;

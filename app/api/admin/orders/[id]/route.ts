@@ -16,7 +16,23 @@ const Schema = z
       ])
       .optional(),
     trackingNumber: z.string().max(80).nullable().optional(),
-    trackingUrl: z.string().max(500).nullable().optional(),
+    // Only http:// / https:// URLs are allowed — anything else (javascript:,
+    // data:, file:) would render as a clickable link on the customer's
+    // order page and could execute arbitrary JS in their browser if a
+    // compromised admin session were used.
+    trackingUrl: z
+      .string()
+      .max(500)
+      .nullable()
+      .optional()
+      .refine(
+        (v) =>
+          v === undefined ||
+          v === null ||
+          v === "" ||
+          /^https?:\/\//i.test(v),
+        { message: "Tracking URL must start with http:// or https://" }
+      ),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "No changes" });
 

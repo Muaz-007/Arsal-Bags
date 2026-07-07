@@ -195,6 +195,7 @@ export async function sendOrderCancelledAdmin(
     id: string;
     customerName: string;
     customerEmail: string;
+    customerPhone?: string;
     total: number;
     itemCount: number;
     reason?: string;

@@ -46,6 +46,7 @@ export default function CheckoutPage() {
     customer: {
       name: string;
       email: string;
+      phone: string;
       address: string;
       city: string;
       country: string;
@@ -127,11 +128,17 @@ export default function CheckoutPage() {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
+    // Phone is captured in the always-visible Contact fieldset, so we
+    // read it from the form regardless of whether a saved address was
+    // picked for the shipping half.
+    const phone = String(form.get("phone") ?? "").trim();
+
     // Prefer the picked saved address when present, otherwise read the form.
     const address = selected
       ? {
           name: selected.name,
           email: (form.get("email") as string) ?? session?.user?.email ?? "",
+          phone,
           address: selected.address,
           city: selected.city,
           country: selected.country,
@@ -140,6 +147,7 @@ export default function CheckoutPage() {
       : {
           name: String(form.get("name") ?? ""),
           email: String(form.get("email") ?? ""),
+          phone,
           address: String(form.get("address") ?? ""),
           city: String(form.get("city") ?? ""),
           country: String(form.get("country") ?? ""),
@@ -271,6 +279,28 @@ export default function CheckoutPage() {
                 required
                 defaultValue={session?.user?.email ?? ""}
               />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="03121234567 or +923121234567"
+                required
+                maxLength={20}
+                // Accepts the same two formats the server enforces, with
+                // spaces / dashes optional. Browser catches the typo in-
+                // line before we round-trip to the API.
+                pattern="^\s*(\+92[\s\-]?3\d{2}[\s\-]?\d{7}|03\d{2}[\s\-]?\d{7})\s*$"
+                title="03XXXXXXXXX or +923XXXXXXXXX"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Pakistani mobile only — we call before dispatch to confirm
+                delivery details.
+              </p>
             </div>
           </div>
         </fieldset>

@@ -56,6 +56,7 @@ function mapDbOrder(o: any): Order {
     userId: o.userId ?? "",
     customerName: o.customerName,
     customerEmail: o.customerEmail,
+    customerPhone: o.customerPhone ?? null,
     items: (o.items ?? []).map((i: any) => ({
       productId: i.productId,
       slug: i.product?.slug ?? "",

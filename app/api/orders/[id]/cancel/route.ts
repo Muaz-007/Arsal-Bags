@@ -147,6 +147,7 @@ export async function POST(
       id: order.id,
       customerName: order.customerName,
       customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone ?? undefined,
       total: Number(order.total),
       itemCount: order.items.reduce((a, i) => a + i.quantity, 0),
       reason: reasonText,

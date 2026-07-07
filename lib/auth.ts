@@ -111,9 +111,22 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       // ── Mock mode (no DATABASE_URL) ────────────────────────────────────
-      const adminEmail = (process.env.ADMIN_EMAIL ?? "bags.art.pk@gmail.com").toLowerCase();
-      const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
-      if (email === adminEmail && password === adminPassword) {
+      // Fail closed in production — we never want the "accept any password"
+      // path below to run outside of a local dev env, even if someone
+      // accidentally deploys without a DB URL.
+      if (process.env.NODE_ENV === "production") return null;
+
+      // Admin credentials MUST be provided explicitly — no hardcoded
+      // fallback password. If either env var is missing, refuse the
+      // admin path rather than accepting a well-known default.
+      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      if (
+        adminEmail &&
+        adminPassword &&
+        email === adminEmail &&
+        password === adminPassword
+      ) {
         const admin = USERS.find((u) => u.email === adminEmail);
         return {
           id: admin?.id ?? "u_admin",
@@ -124,8 +137,9 @@ const providers: NextAuthOptions["providers"] = [
       }
       if (password.length < 6) return null;
       const known = USERS.find((u) => u.email === email);
-      // In mock mode we accept any 6+ char password so the demo flow works.
-      // Real production never reaches this branch (DATABASE_URL is set).
+      // In dev-mock mode we accept any 6+ char password so the demo flow
+      // works. The production guard above ensures this branch is unreachable
+      // in real deployments.
       return {
         id: known?.id ?? `mock_${Date.now()}`,
         name: known?.name ?? email.split("@")[0],
@@ -219,11 +233,16 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  // Real value lives in NEXTAUTH_SECRET. In production without it, sign-in
-  // fails closed (see `secretReady()` in authorize()), so the placeholder
-  // here never gets used for anything that matters — it only exists to keep
-  // module-load + build-time `collectPageData` from crashing.
-  secret: process.env.NEXTAUTH_SECRET ?? "dev-insecure-secret-change-me",
+  // The secret MUST come from env. Development gets a fixed placeholder
+  // (only so `next build`'s prerender pass doesn't crash without a .env),
+  // but production refuses to sign or verify JWTs against a predictable
+  // value — a missing secret at request time is caught by `secretReady()`
+  // in `authorize` and by the middleware's fail-closed branch.
+  secret:
+    process.env.NEXTAUTH_SECRET ??
+    (process.env.NODE_ENV === "production"
+      ? ""
+      : "dev-insecure-secret-change-me"),
 };
 
 export { AUTH_GENERIC_ERROR };

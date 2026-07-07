@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
   await prisma.$transaction([
     prisma.user.update({
       where: { id: row.userId },

@@ -30,6 +30,14 @@ const securityHeaders = [
       "camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()",
   },
   {
+    // Isolate the browsing context so a compromised third-party window
+    // opened via target=_blank (or a rogue popup) can't reach back into
+    // ours via window.opener. Defense-in-depth on top of the per-link
+    // rel="noopener" attributes we already apply.
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  {
     // Modern XSS protection. Adjust the connect-src / img-src list when you
     // add a new third-party service (analytics, etc.).
     key: "Content-Security-Policy",

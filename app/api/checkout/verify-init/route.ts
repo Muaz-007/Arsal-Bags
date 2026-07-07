@@ -105,7 +105,7 @@ export async function POST(req: Request) {
   // Case C: no user yet (or unverified credentials stub). Generate a fresh
   // password + code, upsert everything, and mail the code.
   const plaintextPassword = generatePassword();
-  const passwordHash = await bcrypt.hash(plaintextPassword, 10);
+  const passwordHash = await bcrypt.hash(plaintextPassword, 12);
 
   const user = existing
     ? await prisma.user.update({

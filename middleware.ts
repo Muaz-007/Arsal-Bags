@@ -23,10 +23,16 @@ export async function middleware(req: NextRequest) {
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
   const secret = process.env.NEXTAUTH_SECRET;
-  if (!secret && process.env.NODE_ENV === "production") {
-    // Fail closed in production — a missing secret means tokens can't be
-    // verified, so we block access rather than letting anyone through.
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      // Fail closed in production — a missing secret means tokens can't
+      // be verified, so we block access rather than letting anyone
+      // through with a predictable placeholder secret.
+      return NextResponse.redirect(new URL("/auth/login", req.url));
+    }
+    // Dev-only fallback purely so `next dev` on a fresh clone doesn't
+    // die before you've written `.env`. NEVER shipped to production
+    // because of the guard above.
   }
 
   const token = await getToken({

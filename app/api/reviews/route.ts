@@ -8,12 +8,26 @@ import {
   rateLimitedResponse,
 } from "@/lib/rate-limit";
 
+// Review photos can ONLY come from our Cloudinary bucket — the customer
+// upload endpoint (/api/upload/review) pipes files through Cloudinary and
+// returns res.cloudinary.com URLs. Restricting the shape here prevents a
+// bypassed client from stuffing arbitrary URLs (phishing sites, tracker
+// pixels, SVGs with embedded scripts) into a review that then renders on
+// every buyer's product page.
+const cloudinaryUrl = z
+  .string()
+  .url()
+  .refine(
+    (v) => /^https:\/\/res\.cloudinary\.com\//i.test(v),
+    { message: "Only Cloudinary URLs are allowed" }
+  );
+
 const Schema = z.object({
   productId: z.string().min(1).max(64),
   rating: z.number().int().min(1).max(5),
   title: z.string().min(2).max(120),
   body: z.string().min(8).max(2000),
-  images: z.array(z.string().url()).max(3).default([]),
+  images: z.array(cloudinaryUrl).max(3).default([]),
 });
 
 /**
