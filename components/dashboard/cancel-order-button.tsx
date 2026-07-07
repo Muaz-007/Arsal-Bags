@@ -3,10 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { cn } from "@/lib/utils";
+
+// Kept 1:1 with the server enum in app/api/orders/[id]/cancel/route.ts.
+type ReasonKey =
+  | "changed_mind"
+  | "wrong_item"
+  | "found_cheaper"
+  | "too_slow"
+  | "duplicate"
+  | "other";
+
+const REASONS: { value: ReasonKey; label: string }[] = [
+  { value: "changed_mind", label: "Changed my mind" },
+  { value: "wrong_item", label: "Ordered the wrong item / colour" },
+  { value: "found_cheaper", label: "Found it cheaper elsewhere" },
+  { value: "too_slow", label: "Taking too long" },
+  { value: "duplicate", label: "Duplicate order" },
+  { value: "other", label: "Other" },
+];
 
 /**
  * Small "cancel this order" pill + confirmation modal shown on the
@@ -20,14 +40,39 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
   const push = useToast((s) => s.push);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState<ReasonKey | null>(null);
+  const [otherReason, setOtherReason] = useState("");
 
   useBodyScrollLock(open);
 
+  function reset() {
+    setReason(null);
+    setOtherReason("");
+  }
+
   async function confirmCancel() {
+    if (!reason) {
+      push({ title: "Please pick a reason.", tone: "error" });
+      return;
+    }
+    if (reason === "other" && otherReason.trim().length < 4) {
+      push({
+        title: "Add a short note",
+        description: "Just a few words about why — it helps us improve.",
+        tone: "error",
+      });
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          reason,
+          otherReason:
+            reason === "other" ? otherReason.trim().slice(0, 280) : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -46,6 +91,7 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
         tone: "success",
       });
       setOpen(false);
+      reset();
       router.refresh();
     } catch {
       push({
@@ -116,23 +162,81 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
                   </button>
                 </div>
 
-                <div className="p-5 space-y-4">
+                <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
                   <p className="text-sm text-foreground/90 leading-relaxed">
-                    We'll release the items back into stock and send a
-                    confirmation to your inbox. You won't be charged for
-                    anything — this order hadn't shipped yet.
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    If you change your mind afterwards, just place a new
-                    order — everything is available again immediately.
+                    We'll release the items back into stock and won't charge
+                    you — this order hadn't shipped yet.
                   </p>
 
-                  <div className="flex gap-3 pt-2">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Why are you cancelling?
+                    </p>
+                    <ul className="space-y-1.5" role="radiogroup" aria-label="Cancellation reason">
+                      {REASONS.map((opt) => {
+                        const active = reason === opt.value;
+                        return (
+                          <li key={opt.value}>
+                            <button
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => setReason(opt.value)}
+                              disabled={busy}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm text-left transition-colors",
+                                active
+                                  ? "border-gold bg-gold/5 dark:bg-gold/10"
+                                  : "border-border hover:border-foreground/30",
+                                busy && "opacity-60 pointer-events-none"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "h-4 w-4 rounded-full border grid place-items-center shrink-0 transition-colors",
+                                  active
+                                    ? "border-gold bg-gold text-black"
+                                    : "border-border"
+                                )}
+                              >
+                                {active && <Check className="h-2.5 w-2.5" />}
+                              </span>
+                              <span className="flex-1">{opt.label}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  {reason === "other" && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        Tell us a bit more
+                      </p>
+                      <Textarea
+                        value={otherReason}
+                        onChange={(e) => setOtherReason(e.target.value)}
+                        maxLength={280}
+                        rows={3}
+                        placeholder="A few words — it helps us do better next time."
+                        disabled={busy}
+                      />
+                      <p className="text-[11px] text-muted-foreground text-right">
+                        {otherReason.length}/280
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
                       className="flex-1"
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false);
+                        reset();
+                      }}
                       disabled={busy}
                     >
                       Keep order
@@ -142,6 +246,10 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
                       variant="gold"
                       className="flex-1 bg-destructive text-white hover:bg-destructive/90"
                       loading={busy}
+                      disabled={
+                        !reason ||
+                        (reason === "other" && otherReason.trim().length < 4)
+                      }
                       onClick={confirmCancel}
                     >
                       Yes, cancel

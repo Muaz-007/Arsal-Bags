@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth-server";
 import {
@@ -10,6 +11,35 @@ import {
   rateLimit,
   rateLimitedResponse,
 } from "@/lib/rate-limit";
+
+// Canonical reason keys the modal shows. `other` requires the free-text
+// `otherReason` field; the rest are self-explanatory. Kept in sync with
+// the client radio list in components/dashboard/cancel-order-button.
+const REASON_KEYS = [
+  "changed_mind",
+  "wrong_item",
+  "found_cheaper",
+  "too_slow",
+  "duplicate",
+  "other",
+] as const;
+type ReasonKey = (typeof REASON_KEYS)[number];
+
+const REASON_LABEL: Record<ReasonKey, string> = {
+  changed_mind: "Changed my mind",
+  wrong_item: "Ordered the wrong item / colour",
+  found_cheaper: "Found it cheaper elsewhere",
+  too_slow: "Taking too long",
+  duplicate: "Duplicate order",
+  other: "Other",
+};
+
+const Schema = z.object({
+  reason: z.enum(REASON_KEYS),
+  // Only meaningful when `reason === "other"`; capped so a customer
+  // can't paste a novel into the order row.
+  otherReason: z.string().max(280).optional(),
+});
 
 /**
  * POST /api/orders/[id]/cancel
@@ -38,6 +68,23 @@ export async function POST(
     windowMs: 60 * 60_000,
   });
   if (!limit.ok) return rateLimitedResponse(limit);
+
+  const body = await req.json().catch(() => null);
+  const parsed = Schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Please pick a cancellation reason." },
+      { status: 400 }
+    );
+  }
+  const { reason, otherReason } = parsed.data;
+
+  // Compose the human-readable string we persist. "Other" reasons carry
+  // the customer's own text; the rest map cleanly to the friendly labels.
+  const reasonText =
+    reason === "other"
+      ? `Other · ${(otherReason ?? "").trim() || "no details provided"}`
+      : REASON_LABEL[reason];
 
   if (!prisma) return NextResponse.json({ ok: true });
   // Alias to a non-null local so the type narrows inside the closures
@@ -73,7 +120,7 @@ export async function POST(
   await db.$transaction([
     db.order.update({
       where: { id: order.id },
-      data: { status: "cancelled" },
+      data: { status: "cancelled", cancellationReason: reasonText },
     }),
     // Put stock back on the shelf. `updateMany` skips items whose product
     // has been deleted since the order was placed rather than throwing.
@@ -102,6 +149,7 @@ export async function POST(
       customerEmail: order.customerEmail,
       total: Number(order.total),
       itemCount: order.items.reduce((a, i) => a + i.quantity, 0),
+      reason: reasonText,
     }),
   ]);
 

@@ -184,6 +184,11 @@ model Order {
   // store the URL too so customers can click-through to TCS/Leopards/etc.
   trackingNumber String?
   trackingUrl    String?
+  // Free-text reason captured from the customer when they cancel. Null
+  // for orders that are still in flight or were never cancelled. Stored
+  // as raw text (capped in the API) rather than an enum so the admin can
+  // read the "Other" details verbatim.
+  cancellationReason String?
 
   user           User?       @relation(fields: [userId], references: [id])
   items          OrderItem[]

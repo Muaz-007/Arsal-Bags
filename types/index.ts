@@ -78,6 +78,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   trackingNumber?: string | null;
   trackingUrl?: string | null;
+  cancellationReason?: string | null;
   createdAt: string;
 }
 

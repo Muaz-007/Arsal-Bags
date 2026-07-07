@@ -197,6 +197,7 @@ export async function sendOrderCancelledAdmin(
     customerEmail: string;
     total: number;
     itemCount: number;
+    reason?: string;
   }
 ) {
   const { html, text } = orderCancelledAdminTemplate(order);

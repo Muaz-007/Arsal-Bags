@@ -129,6 +129,14 @@ export default async function AdminOrdersPage({
                       >
                         {o.status}
                       </Badge>
+                      {o.status === "cancelled" && o.cancellationReason && (
+                        <p
+                          className="mt-1 text-[11px] text-muted-foreground max-w-[180px] truncate"
+                          title={o.cancellationReason}
+                        >
+                          {o.cancellationReason}
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-3">
                       {o.paymentMethod === "cod" ? (

@@ -510,6 +510,7 @@ export function orderCancelledAdminTemplate(order: {
   customerEmail: string;
   total: number;
   itemCount: number;
+  reason?: string;
 }): { html: string; text: string } {
   const formattedTotal = `Rs ${Math.round(order.total).toLocaleString("en-PK")}`;
 
@@ -540,6 +541,19 @@ export function orderCancelledAdminTemplate(order: {
         </tr>
       </table>
 
+      ${
+        order.reason
+          ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fff8eb;border-left:3px solid ${GOLD};border-radius:8px;margin:0 0 18px;">
+        <tr>
+          <td style="padding:14px 18px;">
+            <p style="margin:0 0 4px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${GOLD_DARK};">Customer's reason</p>
+            <p style="margin:0;font-size:14px;color:${TEXT};line-height:1.55;">${escape(order.reason)}</p>
+          </td>
+        </tr>
+      </table>`
+          : ""
+      }
+
       ${ctaButton(`${BASE_URL}/admin/orders/${order.id}`, "Open in admin panel")}
     `,
   });
@@ -548,7 +562,7 @@ export function orderCancelledAdminTemplate(order: {
 
 ${order.customerName} <${order.customerEmail}> cancelled their order.
 ${order.itemCount} item(s), ${formattedTotal}. Stock has been restored.
-
+${order.reason ? `Reason: ${order.reason}\n` : ""}
 Open: ${BASE_URL}/admin/orders/${order.id}`;
 
   return { html, text };

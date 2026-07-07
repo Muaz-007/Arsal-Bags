@@ -73,6 +73,7 @@ function mapDbOrder(o: any): Order {
     paymentMethod: (o.paymentMethod ?? "cod") as "cod" | "card",
     trackingNumber: o.trackingNumber ?? null,
     trackingUrl: o.trackingUrl ?? null,
+    cancellationReason: o.cancellationReason ?? null,
     createdAt:
       o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt),
   };
