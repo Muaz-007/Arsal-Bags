@@ -185,9 +185,12 @@ export default function CheckoutPage() {
           postal: String(form.get("postal") ?? ""),
         };
 
-    // Guest path: stash what they've typed and bounce to sign-in. When
+    // Guest path: stash what they've typed and bounce to signup. When
     // NextAuth redirects back to /checkout, useEffect above restores the
-    // form so they only have to click Place Order once more.
+    // form so they only have to click Place Order once more. Name + email
+    // are passed on the URL so the signup form comes up pre-filled — an
+    // existing customer can still switch to the Sign In tab and their
+    // email will carry over.
     if (!authed) {
       writeDraft({
         name: address.name,
@@ -199,9 +202,12 @@ export default function CheckoutPage() {
         postal: address.postal,
         paymentMethod,
       });
-      router.push(
-        `/auth/login?callbackUrl=${encodeURIComponent("/checkout")}`
-      );
+      const params = new URLSearchParams({
+        callbackUrl: "/checkout",
+      });
+      if (address.name) params.set("name", address.name);
+      if (address.email) params.set("email", address.email);
+      router.push(`/auth/signup?${params.toString()}`);
       return;
     }
 

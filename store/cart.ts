@@ -7,11 +7,17 @@ import type { CartLine } from "@/types";
 interface CartState {
   lines: CartLine[];
   coupon?: { code: string; type: "percent" | "fixed"; value: number };
+  // Right-side drawer open state. Held here (not a separate store) so any
+  // action that mutates the cart can also flip the drawer in one call —
+  // e.g. AddToCart opens it, "Continue shopping" closes it.
+  drawerOpen: boolean;
   add: (line: CartLine) => void;
   update: (productId: string, quantity: number, color?: string) => void;
   remove: (productId: string, color?: string) => void;
   clear: () => void;
   applyCoupon: (c: CartState["coupon"]) => void;
+  openDrawer: () => void;
+  closeDrawer: () => void;
   totalItems: () => number;
   subtotal: () => number;
   discount: () => number;
@@ -30,6 +36,7 @@ export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       lines: [],
+      drawerOpen: false,
       add: (line) => {
         const lines = get().lines.slice();
         const idx = lines.findIndex(
@@ -62,6 +69,8 @@ export const useCart = create<CartState>()(
       },
       clear: () => set({ lines: [], coupon: undefined }),
       applyCoupon: (c) => set({ coupon: c }),
+      openDrawer: () => set({ drawerOpen: true }),
+      closeDrawer: () => set({ drawerOpen: false }),
       totalItems: () => get().lines.reduce((a, l) => a + l.quantity, 0),
       subtotal: () =>
         get().lines.reduce((a, l) => a + l.price * l.quantity, 0),

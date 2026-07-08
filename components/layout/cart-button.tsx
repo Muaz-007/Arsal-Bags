@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +19,7 @@ import { useCart } from "@/store/cart";
  */
 export function CartButton() {
   const totalItems = useCart((s) => s.totalItems());
+  const openDrawer = useCart((s) => s.openDrawer);
   const prev = useRef(totalItems);
   const [pulse, setPulse] = useState(false);
 
@@ -34,8 +34,9 @@ export function CartButton() {
   }, [totalItems]);
 
   return (
-    <Link
-      href="/cart"
+    <button
+      type="button"
+      onClick={() => openDrawer()}
       aria-label={`Cart (${totalItems} ${totalItems === 1 ? "item" : "items"})`}
       className={cn(
         "relative h-10 w-10 grid place-items-center rounded-full transition-all",
@@ -74,6 +75,6 @@ export function CartButton() {
           />
         )}
       </AnimatePresence>
-    </Link>
+    </button>
   );
 }

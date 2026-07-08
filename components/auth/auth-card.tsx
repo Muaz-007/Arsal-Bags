@@ -437,6 +437,11 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const callbackUrl = safeCallback(params.get("callbackUrl"));
+  // Prefilled from the checkout page's bounce — the guest already typed
+  // their name + email into the checkout form; no reason to make them
+  // type it again here.
+  const prefilledName = params.get("name") ?? "";
+  const prefilledEmail = params.get("email") ?? "";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -513,6 +518,7 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
               name="name"
               autoComplete="off"
               required
+              defaultValue={prefilledName}
               placeholder="Naomi Aldridge"
               className={inputClass}
             />
@@ -529,6 +535,7 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
               type="email"
               autoComplete="off"
               required
+              defaultValue={prefilledEmail}
               placeholder="you@studio.com"
               className={inputClass}
             />

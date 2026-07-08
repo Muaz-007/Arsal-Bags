@@ -15,6 +15,7 @@ import {
   X,
   LayoutTemplate,
   Boxes,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
@@ -49,6 +50,7 @@ const NAV: NavGroup[] = [
   ]},
   { group: "Audience", items: [
     { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/messages", label: "Messages", icon: Mail },
   ]},
   { group: "System", items: [
     { href: "/admin/settings", label: "Settings", icon: Settings },

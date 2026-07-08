@@ -45,41 +45,49 @@ export default async function OrdersPage() {
           {orders.map((o) => (
             <Card key={o.id} className="overflow-hidden">
               <CardContent className="p-0">
-                <header className="px-5 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/30">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Order
-                    </p>
-                    <Link
-                      href={`/dashboard/orders/${o.id}`}
-                      className="font-mono text-sm hover:underline decoration-gold underline-offset-4"
+                {/* Mobile: order id + badge on row 1, placed + total on row 2.
+                    Desktop: everything in a single flex row via `sm:contents`
+                    on the wrappers so the visual hierarchy stays as-is. */}
+                <header className="px-5 py-4 border-b border-border bg-muted/30 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+                  <div className="flex items-start justify-between gap-3 sm:contents">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Order
+                      </p>
+                      <Link
+                        href={`/dashboard/orders/${o.id}`}
+                        className="font-mono text-xs sm:text-sm break-all sm:break-normal hover:underline decoration-gold underline-offset-4"
+                      >
+                        {o.id}
+                      </Link>
+                    </div>
+                    <Badge
+                      className="shrink-0 mt-0.5 sm:order-last sm:mt-0"
+                      variant={
+                        o.status === "shipped" || o.status === "delivered"
+                          ? "success"
+                          : o.status === "pending"
+                            ? "warning"
+                            : "outline"
+                      }
                     >
-                      {o.id}
-                    </Link>
+                      {o.status}
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Placed
-                    </p>
-                    <p className="text-sm">{formatDate(o.createdAt)}</p>
+                  <div className="flex items-center gap-8 sm:contents">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Placed
+                      </p>
+                      <p className="text-sm">{formatDate(o.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Total
+                      </p>
+                      <p className="text-sm font-medium">{formatPrice(o.total)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Total
-                    </p>
-                    <p className="text-sm font-medium">{formatPrice(o.total)}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      o.status === "shipped" || o.status === "delivered"
-                        ? "success"
-                        : o.status === "pending"
-                          ? "warning"
-                          : "outline"
-                    }
-                  >
-                    {o.status}
-                  </Badge>
                 </header>
                 <ul className="divide-y divide-border">
                   {o.items.map((item) => (

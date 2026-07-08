@@ -270,6 +270,23 @@ model Subscriber {
   createdAt DateTime @default(now())
 }
 
+// Contact form submissions from /contact. Stored in the DB alongside the
+// email we send to bags.art.pk@gmail.com so the admin panel has a single
+// authoritative inbox — the Gmail thread can still be lost or missed, but
+// the admin dashboard always shows every unread enquiry.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([readAt])
+}
+
 model PasswordResetToken {
   token     String   @id
   userId    String

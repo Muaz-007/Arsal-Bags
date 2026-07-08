@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { sendContactMessage } from "@/lib/email";
+import { prisma } from "@/lib/db";
 import {
   getClientIp,
   rateLimit,
@@ -32,12 +32,19 @@ export async function POST(req: Request) {
 
   const { name, email, subject, message } = parsed.data;
 
-  await sendContactMessage("bags.art.pk@gmail.com", {
-    name,
-    email,
-    subject,
-    message,
-  });
+  // Persist to the DB — /admin/messages is now the single inbox admins
+  // check. We used to also email bags.art.pk@gmail.com from here, but that
+  // duplicated the record (and cluttered the mailbox with copies of
+  // everything already visible in the panel).
+  if (prisma) {
+    await prisma.contactMessage
+      .create({
+        data: { name, email, subject, message },
+      })
+      .catch((err) => {
+        console.error("[contact] failed to persist message", err);
+      });
+  }
 
   return NextResponse.json({ ok: true });
 }

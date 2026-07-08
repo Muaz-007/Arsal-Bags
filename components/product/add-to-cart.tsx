@@ -13,6 +13,7 @@ export function AddToCart({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [color, setColor] = useState(product.colors[0]);
   const add = useCart((s) => s.add);
+  const openDrawer = useCart((s) => s.openDrawer);
   const toggle = useWishlist((s) => s.toggle);
   const wished = useWishlist((s) => s.ids.includes(product.id));
   const push = useToast((s) => s.push);
@@ -29,6 +30,10 @@ export function AddToCart({ product }: { product: Product }) {
       quantity: qty,
       color,
     });
+    // Instead of just a toast, slide the cart drawer open so the buyer
+    // sees the item in their bag immediately — one fewer step to checkout.
+    // Kept the toast too for accessibility (screen readers announce it).
+    openDrawer();
     push({
       title: "Added to your bag",
       description: `${product.name}${color ? ` · ${color}` : ""}`,

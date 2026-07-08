@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Search, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchPanel } from "@/store/search";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { formatPrice } from "@/lib/utils";
@@ -51,6 +51,28 @@ export function SearchPanel() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Only honour the catalogue filters while the shopper is on /products —
+  // searching from the homepage should stay unfiltered. `category`, `price`
+  // (min-max) and `sale` are the filters the products page controls.
+  const activeFilters = useMemo(() => {
+    if (!pathname?.startsWith("/products")) return {} as Record<string, string>;
+    const out: Record<string, string> = {};
+    const category = searchParams.get("category");
+    const price = searchParams.get("price");
+    const sale = searchParams.get("sale");
+    if (category) out.category = category;
+    if (price) out.price = price;
+    if (sale === "1") out.sale = "1";
+    return out;
+  }, [pathname, searchParams]);
+
+  const filterQueryString = useMemo(() => {
+    const qs = new URLSearchParams(activeFilters).toString();
+    return qs ? `&${qs}` : "";
+  }, [activeFilters]);
 
   useBodyScrollLock(open);
 
@@ -90,9 +112,12 @@ export function SearchPanel() {
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
-          signal: ctrl.signal,
-        });
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(q)}${filterQueryString}`,
+          {
+            signal: ctrl.signal,
+          }
+        );
         if (!res.ok) return;
         const data = (await res.json()) as { products: Hit[] };
         setHits(data.products);
@@ -106,7 +131,8 @@ export function SearchPanel() {
       ctrl.abort();
       clearTimeout(t);
     };
-  }, [query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, filterQueryString]);
 
   function go(href: string) {
     router.push(href);
@@ -117,10 +143,11 @@ export function SearchPanel() {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
-    go(`/products?q=${encodeURIComponent(q)}`);
+    go(`/products?q=${encodeURIComponent(q)}${filterQueryString}`);
   }
 
   const hasQuery = query.trim().length >= 2;
+  const activeFilterCount = Object.keys(activeFilters).length;
 
   return (
     <AnimatePresence>
@@ -173,6 +200,16 @@ export function SearchPanel() {
                 </button>
               </form>
 
+              {/* Active-filter hint — tells the shopper their catalogue
+                  filters are also constraining these search results, so
+                  "no matches" isn't misread as "product doesn't exist". */}
+              {activeFilterCount > 0 && (
+                <div className="px-5 py-2.5 border-b border-border bg-gold/5 text-[11px] text-muted-foreground flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold" />
+                  Searching within your active filter{activeFilterCount === 1 ? "" : "s"}.
+                </div>
+              )}
+
               {/* Content */}
               <div className="p-5 sm:p-6 max-h-[60vh] overflow-y-auto">
                 {hasQuery ? (
@@ -185,7 +222,9 @@ export function SearchPanel() {
                         <button
                           type="button"
                           onClick={() =>
-                            go(`/products?q=${encodeURIComponent(query)}`)
+                            go(
+                              `/products?q=${encodeURIComponent(query)}${filterQueryString}`
+                            )
                           }
                           className="mt-3 text-sm underline decoration-gold underline-offset-4"
                         >
@@ -232,7 +271,9 @@ export function SearchPanel() {
                         <button
                           type="button"
                           onClick={() =>
-                            go(`/products?q=${encodeURIComponent(query)}`)
+                            go(
+                              `/products?q=${encodeURIComponent(query)}${filterQueryString}`
+                            )
                           }
                           className="w-full mt-3 flex items-center justify-center gap-2 h-10 rounded-md border border-border hover:bg-muted text-sm transition"
                         >

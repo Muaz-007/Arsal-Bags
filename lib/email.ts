@@ -1,6 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import {
-  contactMessageTemplate,
   emailChangeTemplate,
   orderCancelledAdminTemplate,
   orderCancelledCustomerTemplate,
@@ -217,24 +216,3 @@ export async function sendPasswordChangedConfirmation(to: string, name: string) 
   });
 }
 
-export async function sendContactMessage(
-  to: string,
-  input: { name: string; email: string; subject: string; message: string }
-) {
-  const { html, text } = contactMessageTemplate(input);
-  const subjectLabel: Record<string, string> = {
-    order: "Order question",
-    product: "Product enquiry",
-    wholesale: "Wholesale enquiry",
-    press: "Press / collaboration",
-    other: "Something else",
-  };
-  const prettySubject = subjectLabel[input.subject] ?? input.subject;
-  return sendEmail({
-    to,
-    replyTo: input.email,
-    subject: `[${prettySubject}] ${input.name}`,
-    html,
-    text,
-  });
-}
