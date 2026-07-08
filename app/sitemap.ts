@@ -4,8 +4,16 @@ import { SITE_URL } from "@/lib/site";
 
 const BASE = SITE_URL;
 
+// Serve fresh on request. Prerendering during build hits the DB, which
+// isn't guaranteed reachable from Vercel's build environment — Neon
+// endpoints in particular can be paused/cold. Dynamic rendering keeps
+// the build reliable and the sitemap current.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { products } = await listProducts({ perPage: 1000 });
+  const { products } = await listProducts({ perPage: 1000 }).catch(() => ({
+    products: [] as Awaited<ReturnType<typeof listProducts>>["products"],
+  }));
 
   const staticRoutes: MetadataRoute.Sitemap = [
     "",

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const dynamic = "force-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/page-header";

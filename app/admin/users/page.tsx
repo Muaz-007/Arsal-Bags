@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { listUsers } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
   const users = await listUsers();
   return (

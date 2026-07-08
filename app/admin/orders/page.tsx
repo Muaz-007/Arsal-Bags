@@ -6,6 +6,8 @@ import { ListToolbar } from "@/components/admin/list-toolbar";
 import { listOrders } from "@/lib/queries";
 import { formatDate, formatPrice } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 type SP = { [k: string]: string | string[] | undefined };
 const first = (v: string | string[] | undefined) =>
   Array.isArray(v) ? v[0] : v;

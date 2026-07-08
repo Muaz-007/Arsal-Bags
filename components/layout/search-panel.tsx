@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Search, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchPanel } from "@/store/search";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { formatPrice } from "@/lib/utils";
@@ -43,7 +43,23 @@ const QUICK_LINKS = [
 
 const POPULAR = ["Florence Tote", "Atelier Backpack", "Soirée Clutch"];
 
+/**
+ * Because this panel is rendered inside the navbar (which sits in the
+ * root layout), it runs on every page. Its inner logic uses
+ * `useSearchParams()` so it can carry the /products page filters into the
+ * search — and in Next.js 14 any client component reading searchParams
+ * must sit inside a Suspense boundary or every page opts out of static
+ * generation. We wrap the inner panel here so the layout is unaffected.
+ */
 export function SearchPanel() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPanelInner />
+    </Suspense>
+  );
+}
+
+function SearchPanelInner() {
   const open = useSearchPanel((s) => s.open);
   const setOpen = useSearchPanel((s) => s.setOpen);
   const [query, setQuery] = useState("");

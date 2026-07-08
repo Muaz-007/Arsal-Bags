@@ -7,6 +7,8 @@ import { StockCell } from "@/components/admin/inventory-stock-cell";
 import { listProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 /**
  * /admin/inventory
  *

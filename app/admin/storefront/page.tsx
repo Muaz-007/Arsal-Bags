@@ -7,6 +7,8 @@ import { SectionEditor, type SectionItem } from "@/components/admin/section-edit
 import { FeaturedPicker } from "@/components/admin/featured-picker";
 import { listProducts, getBestSellers, getSaleProducts } from "@/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 /**
  * /admin/storefront
  *

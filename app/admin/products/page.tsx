@@ -8,6 +8,8 @@ import { ListToolbar } from "@/components/admin/list-toolbar";
 import { listProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 type SP = { [k: string]: string | string[] | undefined };
 const first = (v: string | string[] | undefined) =>
   Array.isArray(v) ? v[0] : v;
