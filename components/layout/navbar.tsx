@@ -147,7 +147,10 @@ export function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              // z-[60] so the scrim sits above the sticky header (z-50) —
+              // otherwise the logo + hamburger stay crisp while the rest of
+              // the page dims, which looks inconsistent.
+              className="md:hidden fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
             <motion.aside
@@ -159,7 +162,7 @@ export function Navbar() {
                 duration: 0.5,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="md:hidden fixed inset-y-0 right-0 z-50 w-[82%] max-w-[320px] bg-background border-l border-border shadow-2xl flex flex-col will-change-transform"
+              className="md:hidden fixed inset-y-0 right-0 z-[70] w-[72%] max-w-[280px] bg-background border-l border-border shadow-2xl flex flex-col will-change-transform"
             >
               {/* Drawer header */}
               <div className="flex items-center justify-between px-5 h-16 border-b border-border">
