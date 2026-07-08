@@ -9,6 +9,9 @@ const Schema = z.object({
   value: z.number().positive().max(100000),
   active: z.boolean().optional(),
   expiresAt: z.string().datetime().optional().nullable(),
+  // Optional redemption cap — omit or send null for unlimited. Capped at
+  // 1M so a typo can't create a nonsensical row.
+  maxUses: z.number().int().positive().max(1_000_000).optional().nullable(),
 });
 
 /**
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
       value: data.value,
       active: data.active ?? true,
       expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+      maxUses: data.maxUses ?? null,
     },
   });
   return NextResponse.json(coupon, { status: 201 });

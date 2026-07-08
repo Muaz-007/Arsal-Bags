@@ -123,9 +123,6 @@ export async function sendOrderConfirmation(
     customerName: string;
     total: number;
     items: { name: string; quantity: number }[];
-    /** Present for guest-checkout orders — displayed at the top of the
-     *  email so the customer can sign in and track their order. */
-    guestPassword?: string;
   }
 ) {
   const { html, text } = orderConfirmationTemplate(order);

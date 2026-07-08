@@ -98,5 +98,7 @@ export interface Coupon {
   value: number;
   active: boolean;
   expiresAt?: string;
+  // Optional redemption cap. Null / undefined means unlimited.
+  maxUses?: number | null;
   uses: number;
 }

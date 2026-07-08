@@ -14,13 +14,20 @@ export const metadata: Metadata = {
 export default async function VerifySignupPage({
   searchParams,
 }: {
-  searchParams: { email?: string };
+  searchParams: { email?: string; callbackUrl?: string };
 }) {
   // Already signed in? Skip the whole flow.
   const user = await getCurrentUser();
   if (user) redirect(user.role === "admin" ? "/admin" : "/");
 
   const email = (searchParams.email ?? "").trim();
+  // Only pass through same-origin paths. Blocks the callback param being
+  // used to phish freshly-verified users to a foreign login-alike.
+  const rawCallback = searchParams.callbackUrl ?? "";
+  const callbackUrl =
+    rawCallback.startsWith("/") && !rawCallback.startsWith("//")
+      ? rawCallback
+      : undefined;
 
   return (
     <div className="container py-12 lg:py-20 max-w-md">
@@ -50,7 +57,7 @@ export default async function VerifySignupPage({
         </p>
       </header>
 
-      <VerifySignupForm initialEmail={email} />
+      <VerifySignupForm initialEmail={email} callbackUrl={callbackUrl} />
     </div>
   );
 }

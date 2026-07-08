@@ -451,6 +451,7 @@ export async function listCoupons(): Promise<Coupon[]> {
       value: D(c.value),
       active: c.active,
       expiresAt: c.expiresAt?.toISOString(),
+      maxUses: c.maxUses ?? null,
       uses: c.uses,
     }));
   }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
@@ -51,10 +50,6 @@ const Schema = z.object({
   // paymentMethod = "card" (which would falsely appear as a card payment
   // in the admin view). Widen this enum when Stripe/JazzCash is live.
   paymentMethod: z.enum(["cod"]).default("cod"),
-  // Guests must include the 6-digit code that was emailed to them by
-  // /api/checkout/verify-init before we'll place the order. Authenticated
-  // customers omit this field entirely.
-  verificationCode: z.string().regex(/^\d{6}$/).optional(),
 });
 
 // PKR amounts. Rs 250 shipping, waived on orders Rs 4,000+. No sales tax.
@@ -88,13 +83,21 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid order" }, { status: 400 });
   }
-  const {
-    customer,
-    items,
-    couponCode,
-    paymentMethod,
-    verificationCode,
-  } = parsed.data;
+  const { customer, items, couponCode, paymentMethod } = parsed.data;
+
+  // Sign-in required — guest checkout has been retired. If an unauthed
+  // request slips through (e.g. a client that hasn't been updated), tell
+  // the client to bounce the user to sign-in and stop here.
+  const me = await getCurrentUser();
+  if (!me) {
+    return NextResponse.json(
+      {
+        error: "Please sign in to place your order.",
+        code: "SIGN_IN_REQUIRED",
+      },
+      { status: 401 }
+    );
+  }
 
   // ── Server-side totals: never trust the client's numbers ─────────────────
   const subtotal = round2(items.reduce((a, i) => a + i.price * i.quantity, 0));
@@ -108,7 +111,17 @@ export async function POST(req: Request) {
     const row = await prisma.coupon.findUnique({
       where: { code: couponCode.toUpperCase() },
     });
-    if (row?.active && (!row.expiresAt || row.expiresAt > new Date())) {
+    // Reject reasons folded into one generic message so we don't hint at
+    // whether the code was inactive vs expired vs redeemed-out — that would
+    // help an attacker probe every code in a dictionary. `maxUses` null
+    // means unlimited; anything else caps redemptions.
+    const capReached =
+      row?.maxUses != null && row.uses >= row.maxUses;
+    if (
+      row?.active &&
+      (!row.expiresAt || row.expiresAt > new Date()) &&
+      !capReached
+    ) {
       coupon = {
         code: row.code,
         type: row.type as "percent" | "fixed",
@@ -144,81 +157,6 @@ export async function POST(req: Request) {
   // `paymentMethod` enum and add the branch that sets a `paymentRef`.
   const paymentRef: string | undefined = undefined;
 
-  const me = await getCurrentUser();
-
-  // ── Guest verification ───────────────────────────────────────────────────
-  // Guests must have called /api/checkout/verify-init first to receive a
-  // 6-digit code. We validate that code here before touching stock or
-  // creating the order. Authenticated customers skip this block entirely.
-  let guestUserId: string | undefined;
-  let guestPasswordForEmail: string | undefined;
-  if (!me && prisma) {
-    if (!verificationCode) {
-      return NextResponse.json(
-        {
-          error: "Please verify your email before placing the order.",
-          code: "VERIFICATION_REQUIRED",
-        },
-        { status: 401 }
-      );
-    }
-    const guestEmail = customer.email.toLowerCase().trim();
-    const guestUser = await prisma.user.findUnique({
-      where: { email: guestEmail },
-      select: { id: true, emailVerified: true, role: true },
-    });
-    const record = guestUser
-      ? await prisma.emailVerificationCode.findUnique({
-          where: { userId: guestUser.id },
-        })
-      : null;
-
-    const invalid = () =>
-      NextResponse.json(
-        {
-          error:
-            "That verification code isn't valid. Request a new one and try again.",
-          code: "VERIFICATION_FAILED",
-        },
-        { status: 400 }
-      );
-
-    if (!guestUser || !record) return invalid();
-    if (record.expiresAt < new Date()) {
-      await prisma.emailVerificationCode.delete({
-        where: { userId: guestUser.id },
-      });
-      return invalid();
-    }
-    if (record.attempts >= 5) {
-      await prisma.emailVerificationCode.delete({
-        where: { userId: guestUser.id },
-      });
-      return invalid();
-    }
-    const match = await bcrypt.compare(verificationCode, record.codeHash);
-    if (!match) {
-      await prisma.emailVerificationCode.update({
-        where: { userId: guestUser.id },
-        data: { attempts: { increment: 1 } },
-      });
-      return invalid();
-    }
-
-    // Verified: mark the user, remember the guest password so we can drop
-    // it into the confirmation email once the order is created, and drop
-    // the code row.
-    guestUserId = guestUser.id;
-    guestPasswordForEmail = record.guestPasswordDisplay ?? undefined;
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: guestUser.id },
-        data: { emailVerified: new Date() },
-      }),
-      prisma.emailVerificationCode.delete({ where: { userId: guestUser.id } }),
-    ]);
-  }
-
   let id: string;
   if (prisma) {
     const db = prisma;
@@ -252,7 +190,7 @@ export async function POST(req: Request) {
 
         const created = await tx.order.create({
           data: {
-            userId: me?.id ?? guestUserId,
+            userId: me.id,
             customerName: customer.name,
             customerEmail: customer.email,
             customerPhone: normalizePhone(customer.phone),
@@ -326,11 +264,6 @@ export async function POST(req: Request) {
     customerName: customer.name,
     total,
     items: items.map((i) => ({ name: i.name, quantity: i.quantity })),
-    // Only set for guest checkouts — surfaces the auto-generated password
-    // at the top of the email so the customer can sign in and track their
-    // order. Authenticated buyers pass `undefined` and see the normal
-    // template with no password panel.
-    guestPassword: guestPasswordForEmail,
   });
 
   return NextResponse.json({

@@ -51,20 +51,29 @@ export default function ShippingPage() {
 
       <ProseSection id="returns" title="Returns">
         <p>
-          Pieces can be returned within <strong>30 days</strong> of delivery,
-          unused, in their original packaging. Made-to-order and monogrammed
-          items are final sale.
+          Pieces can be returned within <strong>7 days</strong> of delivery,
+          unused, with tags on and in the original packaging. Damaged or
+          incorrect items ship back free — a change-of-mind return carries a
+          10% restocking fee. Made-to-order and monogrammed pieces are final
+          sale.
         </p>
         <p>
-          Email{" "}
+          Full breakdown — cancellation timings, tier-wise refund amounts,
+          timelines — lives on the{" "}
+          <a
+            href="/legal/refunds"
+            className="underline decoration-gold underline-offset-4"
+          >
+            refund &amp; return policy
+          </a>{" "}
+          page. To start a return, email{" "}
           <a
             href="mailto:bags.art.pk@gmail.com"
             className="underline decoration-gold underline-offset-4"
           >
             bags.art.pk@gmail.com
           </a>{" "}
-          with your order number to start a return. We'll share the return
-          address and pickup instructions. Return shipping is on the customer.
+          with your order number.
         </p>
       </ProseSection>
 

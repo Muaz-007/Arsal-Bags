@@ -216,8 +216,6 @@ export function orderConfirmationTemplate(order: {
   customerName: string;
   total: number;
   items: { name: string; quantity: number }[];
-  /** Set for guest checkouts — the auto-generated password we mailed. */
-  guestPassword?: string;
 }): { html: string; text: string } {
   const firstName = order.customerName.split(" ")[0];
 
@@ -235,37 +233,11 @@ export function orderConfirmationTemplate(order: {
 
   const formattedTotal = `Rs ${Math.round(order.total).toLocaleString("en-PK")}`;
 
-  // Sits directly above the "Thank you" heading when the buyer was a
-  // guest — surfaces the auto-generated password so they can sign in
-  // and track their order without a separate account-creation step.
-  const guestPasswordPanel = order.guestPassword
-    ? `
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 22px;background:#fff8eb;border:1px solid ${GOLD};border-radius:12px;">
-        <tr>
-          <td style="padding:18px 22px;">
-            <p style="margin:0 0 6px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${GOLD_DARK};">
-              Your account is ready
-            </p>
-            <p style="margin:0 0 12px;font-size:14px;color:${TEXT};line-height:1.55;">
-              Use this password to sign in and track your order:
-            </p>
-            <p style="margin:0 0 10px;padding:12px 16px;background:${CARD};border:1px solid ${BORDER};border-radius:8px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:18px;font-weight:600;letter-spacing:2px;color:${TEXT};text-align:center;">
-              ${escape(order.guestPassword)}
-            </p>
-            <p style="margin:0;font-size:12px;color:${TEXT_MUTED};line-height:1.5;">
-              Email: same address we sent this to. You can change your password from your profile after signing in.
-            </p>
-          </td>
-        </tr>
-      </table>`
-    : "";
-
   const html = shell({
     preheader: `Order ${order.id} confirmed · ${formattedTotal}`,
     title: "Order confirmed",
     bodyHtml: `
       <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Order confirmed</p>
-      ${guestPasswordPanel}
       <h1 style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:1.1;color:${TEXT};font-weight:600;letter-spacing:-0.5px;">
         Thank you, ${escape(firstName)}.
       </h1>
@@ -329,19 +301,10 @@ export function orderConfirmationTemplate(order: {
     `,
   });
 
-  const guestPasswordText = order.guestPassword
-    ? `\nYour account is ready. Sign in to track your order:
-  Email:    (this address)
-  Password: ${order.guestPassword}
-
-You can change your password from your profile after signing in.
-\n`
-    : "";
-
   const text = `Order confirmed · ${order.id}
 
 Hi ${firstName},
-${guestPasswordText}
+
 Thank you for ordering from BagsArt.
 
 Items:

@@ -1,13 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Banknote, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 
+// Kept in sync with the checkout page's DRAFT_KEY. Belt-and-suspenders
+// cleanup here catches any edge case where placeOrder redirected before
+// its own clearDraft call landed (e.g. an unhandled exception between
+// the fetch success and the router.push).
+const DRAFT_KEY = "bagsart-checkout-draft";
+
 export default function CheckoutSuccess() {
   const params = useSearchParams();
   const orderId = params.get("order");
+
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // Storage disabled — nothing to clean up anyway.
+    }
+  }, []);
   // Card orders come back with a Stripe session_id; COD orders come back
   // with just the order ref. We treat "no session_id" as COD to show the
   // right copy on the confirmation screen.

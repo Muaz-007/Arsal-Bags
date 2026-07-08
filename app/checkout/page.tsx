@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -13,8 +13,60 @@ import { useCart } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { SavedAddressPicker } from "@/components/checkout/saved-address-picker";
-import { GuestVerifyModal } from "@/components/checkout/guest-verify-modal";
 import type { SavedAddress } from "@/types/address";
+
+// Persist the in-progress checkout form across a guest → login → back-to-
+// checkout round-trip. The user fills the form, clicks Place Order, gets
+// bounced to /auth/login, comes back — and their inputs are still there.
+// Cleared on a successful order and when the user's session identity changes
+// (defensive: don't leak one buyer's typed address to another).
+const DRAFT_KEY = "bagsart-checkout-draft";
+
+type CheckoutDraft = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  postal: string;
+  paymentMethod: "cod" | "card";
+  savedAt: number;
+};
+
+function readDraft(): CheckoutDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CheckoutDraft;
+    // 24-hour TTL — old drafts get discarded so we don't restore a stale
+    // address the user has clearly abandoned.
+    if (Date.now() - parsed.savedAt > 24 * 60 * 60_000) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(d: Omit<CheckoutDraft, "savedAt">) {
+  try {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ ...d, savedAt: Date.now() })
+    );
+  } catch {
+    // Storage disabled — just skip. The redirect still happens.
+  }
+}
+
+function clearDraft() {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // No-op.
+  }
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -36,24 +88,18 @@ export default function CheckoutPage() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("cod");
 
-  // Guest verification modal state — populated the moment an
-  // unauthenticated buyer submits the form. The captured `pendingOrder`
-  // holds the exact payload we'll re-post to /api/checkout once the
-  // customer enters their 6-digit code.
-  const [verifyOpen, setVerifyOpen] = useState(false);
-  const [verifyEmail, setVerifyEmail] = useState("");
-  const [pendingOrder, setPendingOrder] = useState<null | {
-    customer: {
-      name: string;
-      email: string;
-      phone: string;
-      address: string;
-      city: string;
-      country: string;
-      postal: string;
-    };
-    couponCode?: string;
-  }>(null);
+  // Restored guest draft (see writeDraft/readDraft). We hold it in state
+  // so the inputs' defaultValues get the right values on the second render
+  // pass — reading synchronously in render would misfire during SSR.
+  const [draft, setDraft] = useState<CheckoutDraft | null>(null);
+
+  useEffect(() => {
+    const d = readDraft();
+    if (d) {
+      setDraft(d);
+      setPaymentMethod(d.paymentMethod);
+    }
+  }, []);
 
   function pickSaved(a: SavedAddress) {
     setSelected(a);
@@ -65,33 +111,22 @@ export default function CheckoutPage() {
     setNewMode(true);
   }
 
-  /**
-   * Runs after the guest's code has been verified — reposts the captured
-   * order payload with `verificationCode` added, then finalises the same
-   * post-checkout side effects (address save, cart clear, redirect).
-   *
-   * Also used directly by authed customers via `onSubmit`, in which case
-   * `verificationCode` is omitted and the server takes the auth-only path.
-   */
-  async function placeOrder(
-    payloadBase: {
-      customer: {
-        name: string;
-        email: string;
-        address: string;
-        city: string;
-        country: string;
-        postal: string;
-      };
-      couponCode?: string;
-    },
-    verificationCode?: string
-  ) {
+  async function placeOrder(payloadBase: {
+    customer: {
+      name: string;
+      email: string;
+      phone: string;
+      address: string;
+      city: string;
+      country: string;
+      postal: string;
+    };
+    couponCode?: string;
+  }) {
     const body = {
       ...payloadBase,
       items: lines,
       paymentMethod,
-      ...(verificationCode ? { verificationCode } : {}),
     };
     const res = await fetch("/api/checkout", {
       method: "POST",
@@ -104,8 +139,8 @@ export default function CheckoutPage() {
     }
     const data = await res.json();
 
-    // Save the new address for next time (auth users only).
-    if (authed && !selected && saveAddress) {
+    // Save the new address for next time.
+    if (!selected && saveAddress) {
       await fetch("/api/addresses", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -119,21 +154,17 @@ export default function CheckoutPage() {
       }).catch(() => null);
     }
 
+    clearDraft();
     clear();
     router.push(`/checkout/success?order=${data.id}`);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    // Phone is captured in the always-visible Contact fieldset, so we
-    // read it from the form regardless of whether a saved address was
-    // picked for the shipping half.
     const phone = String(form.get("phone") ?? "").trim();
 
-    // Prefer the picked saved address when present, otherwise read the form.
     const address = selected
       ? {
           name: selected.name,
@@ -154,34 +185,31 @@ export default function CheckoutPage() {
           postal: String(form.get("postal") ?? ""),
         };
 
+    // Guest path: stash what they've typed and bounce to sign-in. When
+    // NextAuth redirects back to /checkout, useEffect above restores the
+    // form so they only have to click Place Order once more.
+    if (!authed) {
+      writeDraft({
+        name: address.name,
+        email: address.email,
+        phone: address.phone,
+        address: address.address,
+        city: address.city,
+        country: address.country,
+        postal: address.postal,
+        paymentMethod,
+      });
+      router.push(
+        `/auth/login?callbackUrl=${encodeURIComponent("/checkout")}`
+      );
+      return;
+    }
+
     const payloadBase = { customer: address, couponCode: coupon?.code };
 
+    setLoading(true);
     try {
-      // Authenticated buyers → straight through to the order.
-      if (authed) {
-        await placeOrder(payloadBase);
-        return;
-      }
-
-      // Guests → email a verification code first, then open the modal.
-      const initRes = await fetch("/api/checkout/verify-init", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: address.name, email: address.email }),
-      });
-      const initData = await initRes.json().catch(() => ({}));
-      if (!initRes.ok) {
-        push({
-          title: "Couldn't send verification code",
-          description:
-            initData?.error ?? "Please check your email and try again.",
-          tone: "error",
-        });
-        return;
-      }
-      setPendingOrder(payloadBase);
-      setVerifyEmail(address.email);
-      setVerifyOpen(true);
+      await placeOrder(payloadBase);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Please try again.";
@@ -189,40 +217,6 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  /**
-   * Called by <GuestVerifyModal> when the customer enters a 6-digit code.
-   * Reposts the pending order payload with the code attached — server
-   * validates it and creates the order in the same request.
-   */
-  async function onVerified(code: string) {
-    if (!pendingOrder) return;
-    setLoading(true);
-    try {
-      await placeOrder(pendingOrder, code);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Please try again.";
-      push({
-        title: "Couldn't place order",
-        description: message,
-        tone: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function resendGuestCode() {
-    if (!pendingOrder) return;
-    await fetch("/api/checkout/verify-init", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: pendingOrder.customer.name,
-        email: pendingOrder.customer.email,
-      }),
-    });
   }
 
   if (lines.length === 0) {
@@ -263,26 +257,29 @@ export default function CheckoutPage() {
             <div className="space-y-1.5">
               <Label htmlFor="name">Full name</Label>
               <Input
+                key={`name-${draft?.name ?? "empty"}`}
                 id="name"
                 name="name"
                 required={!selected}
-                defaultValue={session?.user?.name ?? ""}
+                defaultValue={draft?.name ?? session?.user?.name ?? ""}
                 disabled={!!selected}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
+                key={`email-${draft?.email ?? "empty"}`}
                 id="email"
                 name="email"
                 type="email"
                 required
-                defaultValue={session?.user?.email ?? ""}
+                defaultValue={draft?.email ?? session?.user?.email ?? ""}
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="phone">Phone number</Label>
               <Input
+                key={`phone-${draft?.phone ?? "empty"}`}
                 id="phone"
                 name="phone"
                 type="tel"
@@ -291,6 +288,7 @@ export default function CheckoutPage() {
                 placeholder="03121234567 or +923121234567"
                 required
                 maxLength={20}
+                defaultValue={draft?.phone ?? ""}
                 // Accepts the same two formats the server enforces, with
                 // spaces / dashes optional. Browser catches the typo in-
                 // line before we round-trip to the API.
@@ -320,25 +318,44 @@ export default function CheckoutPage() {
             <>
               <div className="space-y-1.5">
                 <Label htmlFor="address">Street address</Label>
-                <Input id="address" name="address" required />
+                <Input
+                  key={`address-${draft?.address ?? "empty"}`}
+                  id="address"
+                  name="address"
+                  required
+                  defaultValue={draft?.address ?? ""}
+                />
               </div>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="city">City</Label>
-                  <Input id="city" name="city" required />
+                  <Input
+                    key={`city-${draft?.city ?? "empty"}`}
+                    id="city"
+                    name="city"
+                    required
+                    defaultValue={draft?.city ?? ""}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="country">Country</Label>
                   <Input
+                    key={`country-${draft?.country ?? "empty"}`}
                     id="country"
                     name="country"
                     required
-                    defaultValue="Pakistan"
+                    defaultValue={draft?.country ?? "Pakistan"}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="postal">Postal code</Label>
-                  <Input id="postal" name="postal" required />
+                  <Input
+                    key={`postal-${draft?.postal ?? "empty"}`}
+                    id="postal"
+                    name="postal"
+                    required
+                    defaultValue={draft?.postal ?? ""}
+                  />
                 </div>
               </div>
 
@@ -409,8 +426,16 @@ export default function CheckoutPage() {
           className="w-full"
           loading={loading}
         >
-          Place order · {formatPrice(total)}
+          {authed
+            ? `Place order · ${formatPrice(total)}`
+            : `Sign in to place order · ${formatPrice(total)}`}
         </Button>
+        {!authed && (
+          <p className="text-xs text-muted-foreground text-center">
+            You'll be redirected to sign in — your details are saved and this
+            form will be waiting when you're back.
+          </p>
+        )}
       </motion.form>
 
       <aside className="lg:sticky lg:top-24 self-start glass rounded-2xl p-6 space-y-5">
@@ -469,18 +494,6 @@ export default function CheckoutPage() {
         </dl>
       </aside>
 
-      <GuestVerifyModal
-        open={verifyOpen}
-        email={verifyEmail}
-        submitting={loading}
-        onClose={() => {
-          if (loading) return;
-          setVerifyOpen(false);
-          setPendingOrder(null);
-        }}
-        onVerified={onVerified}
-        onResend={resendGuestCode}
-      />
     </div>
   );
 }

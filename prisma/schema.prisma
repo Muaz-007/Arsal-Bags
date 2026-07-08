@@ -224,6 +224,9 @@ model Coupon {
   value     Decimal    @db.Decimal(10, 2)
   active    Boolean    @default(true)
   expiresAt DateTime?
+  // Optional redemption cap. When set, the coupon is refused at checkout
+  // once `uses >= maxUses`. Null means unlimited redemptions.
+  maxUses   Int?
   uses      Int        @default(0)
 
   createdAt DateTime   @default(now())
@@ -243,26 +246,18 @@ model EmailChangeToken {
   @@index([userId])
 }
 
-// One active 6-digit signup / checkout verification code per user (one-to-
-// one via userId as the primary key — sending a fresh code overwrites the
-// old one via upsert). The plaintext code itself is never stored; only a
+// One active 6-digit signup verification code per user (one-to-one via
+// userId as the primary key — sending a fresh code overwrites the old
+// one via upsert). The plaintext code itself is never stored; only a
 // bcrypt hash sits in `codeHash`. `attempts` bounds brute-force guessing
 // on a single code before we invalidate it and force a resend.
-//
-// `guestPasswordDisplay` is a short-lived cleartext parking spot used only
-// by the guest-checkout flow: we generate a random password, hash it into
-// User.passwordHash, and stash the plaintext here so we can drop it into
-// the order-confirmation email after the code is verified. The row (and
-// this value) is deleted the moment the order is placed, capped by the
-// 15-minute expiry either way.
 model EmailVerificationCode {
-  userId               String   @id
-  codeHash             String
-  expiresAt            DateTime
-  attempts             Int      @default(0)
-  guestPasswordDisplay String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  userId    String   @id
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -43,6 +43,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
   const [value, setValue] = useState("10");
   const [active, setActive] = useState(true);
   const [expires, setExpires] = useState("");
+  const [maxUses, setMaxUses] = useState("");
 
   function openNew() {
     setCode("");
@@ -50,6 +51,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
     setValue("10");
     setActive(true);
     setExpires("");
+    setMaxUses("");
     setMode({ kind: "new" });
   }
 
@@ -59,6 +61,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
     setValue(String(c.value));
     setActive(c.active);
     setExpires(c.expiresAt ? c.expiresAt.slice(0, 10) : "");
+    setMaxUses(c.maxUses != null ? String(c.maxUses) : "");
     setMode({ kind: "edit", code: c.code });
   }
 
@@ -80,6 +83,19 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
           ? null
           : new Date(expires + "T23:59:59.000Z").toISOString();
 
+      // Empty input = unlimited redemptions (null). Anything else must be a
+      // positive integer — anything invalid falls back to null rather than
+      // silently sending a bad payload the API would reject.
+      let maxUsesPayload: number | null = null;
+      if (maxUses.trim() !== "") {
+        const n = Number(maxUses);
+        if (!Number.isInteger(n) || n <= 0) {
+          push({ title: "Max uses must be a positive whole number", tone: "error" });
+          return;
+        }
+        maxUsesPayload = n;
+      }
+
       if (mode.kind === "new") {
         const res = await fetch("/api/admin/coupons", {
           method: "POST",
@@ -90,6 +106,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
             value: numericValue,
             active,
             expiresAt,
+            maxUses: maxUsesPayload,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -109,6 +126,7 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
               value: numericValue,
               active,
               expiresAt,
+              maxUses: maxUsesPayload,
             }),
           }
         );
@@ -223,6 +241,25 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
                     </div>
                   </div>
 
+                  <div className="space-y-1.5">
+                    <Label>Max redemptions (optional)</Label>
+                    <Input
+                      type="number"
+                      value={maxUses}
+                      onChange={(e) => setMaxUses(e.target.value)}
+                      min={1}
+                      step={1}
+                      placeholder="e.g. 100"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Coupon auto-expires after this many customers use it.
+                      Leave blank for unlimited.
+                      {mode.kind === "edit" && editing && editing.uses > 0 && (
+                        <> Already used <strong>{editing.uses}</strong>{editing.maxUses ? ` of ${editing.maxUses}` : ""} time{editing.uses === 1 ? "" : "s"}.</>
+                      )}
+                    </p>
+                  </div>
+
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
                       type="checkbox"
@@ -268,17 +305,22 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {items.map((c) => (
-                  <tr key={c.code} className={cn("hover:bg-muted/30 transition-colors", !c.active && "opacity-60")}>
+                {items.map((c) => {
+                  const exhausted =
+                    c.maxUses != null && c.uses >= c.maxUses;
+                  return (
+                  <tr key={c.code} className={cn("hover:bg-muted/30 transition-colors", (!c.active || exhausted) && "opacity-60")}>
                     <td className="px-5 py-3 font-mono">{c.code}</td>
                     <td className="px-5 py-3 capitalize">{c.type}</td>
                     <td className="px-5 py-3">
                       {c.type === "percent" ? `${c.value}%` : `$${c.value}`}
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{c.uses}</td>
+                    <td className="px-5 py-3 text-muted-foreground">
+                      {c.maxUses != null ? `${c.uses} / ${c.maxUses}` : c.uses}
+                    </td>
                     <td className="px-5 py-3">
-                      <Badge variant={c.active ? "success" : "muted"}>
-                        {c.active ? "Active" : "Paused"}
+                      <Badge variant={exhausted ? "muted" : c.active ? "success" : "muted"}>
+                        {exhausted ? "Exhausted" : c.active ? "Active" : "Paused"}
                       </Badge>
                     </td>
                     <td className="px-5 py-3">
@@ -302,7 +344,8 @@ export function CouponsManager({ initial }: { initial: Coupon[] }) {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}

@@ -52,6 +52,19 @@ const VISUAL_BY_MODE: Record<
   },
 };
 
+/**
+ * Only allow relative same-origin paths for post-login redirects. Anything
+ * else (absolute URLs, protocol-relative `//evil.com`, javascript:) falls
+ * back to null so we never bounce the freshly authed user to a foreign
+ * origin — that's an open-redirect / phishing vector.
+ */
+function safeCallback(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  return raw;
+}
+
 export function AuthCard({ initialMode }: { initialMode: Mode }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const visual = VISUAL_BY_MODE[mode];
@@ -258,6 +271,7 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   // Prefilled from ?email= when the user is bounced here after verifying.
   const prefilledEmail = params.get("email") ?? "";
   const justVerified = params.get("verified") === "1";
+  const callbackUrl = safeCallback(params.get("callbackUrl"));
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -281,7 +295,15 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
     push({ title: "Welcome back", tone: "success" });
     const session = await getSession();
     const role = (session?.user as { role?: string } | undefined)?.role;
-    router.push(role === "admin" ? "/admin" : "/");
+    // Admins always land in /admin regardless of callbackUrl — an admin
+    // typing a customer URL almost certainly meant to check the panel.
+    // Everyone else honours the callbackUrl if present (e.g. the checkout
+    // page bouncing a guest through login).
+    const dest =
+      role === "admin"
+        ? "/admin"
+        : callbackUrl ?? "/";
+    router.push(dest);
     router.refresh();
   }
 
@@ -386,7 +408,7 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
         <Field delay={0.26}>
           <SocialDivider />
-          <SocialButtons />
+          <SocialButtons callbackUrl={callbackUrl ?? "/"} />
         </Field>
       </form>
 
@@ -410,9 +432,11 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
 function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
   const router = useRouter();
+  const params = useSearchParams();
   const push = useToast((s) => s.push);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const callbackUrl = safeCallback(params.get("callbackUrl"));
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -440,15 +464,21 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
       }
       // Every new account now goes through email verification. We route
       // to /auth/verify-signup with the email prefilled so the user just
-      // types the 6-digit code we just emailed them.
+      // types the 6-digit code we just emailed them. Pass callbackUrl
+      // through so the whole signup → verify → login chain lands the user
+      // where they started (e.g. back on /checkout).
       push({
         title: "Check your inbox",
         description: `We sent a 6-digit code to ${data.email ?? payload.email}.`,
         tone: "success",
       });
-      router.push(
-        `/auth/verify-signup?email=${encodeURIComponent(String(data.email ?? payload.email ?? ""))}`
+      const emailParam = encodeURIComponent(
+        String(data.email ?? payload.email ?? "")
       );
+      const cbParam = callbackUrl
+        ? `&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : "";
+      router.push(`/auth/verify-signup?email=${emailParam}${cbParam}`);
     } finally {
       setLoading(false);
     }
@@ -544,7 +574,7 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
 
         <Field delay={0.32}>
           <SocialDivider />
-          <SocialButtons />
+          <SocialButtons callbackUrl={callbackUrl ?? "/"} />
         </Field>
       </form>
 
@@ -578,14 +608,13 @@ function SocialDivider() {
   );
 }
 
-function SocialButtons() {
+function SocialButtons({ callbackUrl }: { callbackUrl: string }) {
   return (
     <button
       type="button"
-      // Send the user to the homepage after Google completes; default
-      // would bounce them back to /auth/signup which is the wrong place
-      // once they're already signed in.
-      onClick={() => signIn("google", { callbackUrl: "/" })}
+      // callbackUrl carries through /checkout when a guest is bounced
+      // through login; falls back to "/" otherwise.
+      onClick={() => signIn("google", { callbackUrl })}
       className="inline-flex w-full items-center justify-center gap-2 h-11 rounded-xl border border-border bg-background text-sm hover:bg-muted transition active:scale-[0.97]"
     >
       <GoogleIcon className="h-4 w-4" />

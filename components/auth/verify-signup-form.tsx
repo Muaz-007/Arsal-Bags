@@ -25,7 +25,13 @@ const RESEND_COOLDOWN_SECONDS = 60;
  *     sign-in only if we also had the password; otherwise we redirect
  *     to /auth/login with the email prefilled.
  */
-export function VerifySignupForm({ initialEmail }: { initialEmail?: string }) {
+export function VerifySignupForm({
+  initialEmail,
+  callbackUrl,
+}: {
+  initialEmail?: string;
+  callbackUrl?: string;
+}) {
   const router = useRouter();
   const push = useToast((s) => s.push);
   const [email, setEmail] = useState(initialEmail ?? "");
@@ -129,8 +135,15 @@ export function VerifySignupForm({ initialEmail }: { initialEmail?: string }) {
         tone: "success",
       });
       // Send them to login with the email prefilled — we don't have the
-      // password on this page to auto-sign-in.
-      router.push(`/auth/login?email=${encodeURIComponent(email)}&verified=1`);
+      // password on this page to auto-sign-in. Carry the callbackUrl
+      // through so a checkout-originated signup lands them back on
+      // /checkout after the final login step.
+      const cbParam = callbackUrl
+        ? `&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : "";
+      router.push(
+        `/auth/login?email=${encodeURIComponent(email)}&verified=1${cbParam}`
+      );
     } finally {
       setVerifying(false);
     }

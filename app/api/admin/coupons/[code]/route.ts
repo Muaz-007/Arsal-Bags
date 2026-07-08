@@ -9,6 +9,8 @@ const PatchSchema = z
     value: z.number().positive().max(100000).optional(),
     active: z.boolean().optional(),
     expiresAt: z.string().datetime().nullable().optional(),
+    // Explicit null clears the cap (unlimited); omit to leave unchanged.
+    maxUses: z.number().int().positive().max(1_000_000).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "No changes" });
 
@@ -46,6 +48,9 @@ export async function PATCH(
             : parsed.data.expiresAt
               ? new Date(parsed.data.expiresAt)
               : null,
+        // undefined = don't touch. null = clear the cap. number = set it.
+        maxUses:
+          parsed.data.maxUses === undefined ? undefined : parsed.data.maxUses,
       },
     });
     return NextResponse.json(updated);

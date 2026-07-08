@@ -41,15 +41,16 @@ export default function TermsPage() {
 
       <ProseSection id="returns" title="Returns &amp; refunds">
         <p>
-          Standard pieces are returnable within 30 days. Made-to-order and
-          monogrammed pieces are final sale. Full policy is on the{" "}
+          Standard pieces are returnable within 7 days of delivery.
+          Made-to-order and monogrammed pieces are final sale. Cancellation
+          timings, restocking fees, and refund timelines are laid out on the{" "}
           <a
-            href="/help/shipping"
+            href="/legal/refunds"
             className="underline decoration-gold underline-offset-4"
           >
-            shipping &amp; returns page
-          </a>
-          .
+            refund &amp; return policy
+          </a>{" "}
+          page.
         </p>
       </ProseSection>
 
