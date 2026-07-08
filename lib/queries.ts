@@ -40,6 +40,12 @@ function mapDbProduct(p: any): Product {
     colors: Array.isArray(p.colors) ? p.colors : [],
     materials: Array.isArray(p.materials) ? p.materials : [],
     images: Array.isArray(p.images) ? p.images : [],
+    specifications: Array.isArray(p.specifications)
+      ? p.specifications.filter(
+          (s: any) =>
+            s && typeof s.label === "string" && typeof s.value === "string"
+        )
+      : undefined,
     stock: p.stock,
     featured: !!p.featured,
     rating: p.rating ?? 0,

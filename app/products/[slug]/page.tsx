@@ -140,11 +140,7 @@ export default async function ProductDetailPage({
         </nav>
 
         <div className="grid gap-10 lg:gap-16 lg:grid-cols-2">
-          <ProductGallery
-            images={product.images}
-            alt={product.name}
-            color={product.colors[0]}
-          />
+          <ProductGallery images={product.images} alt={product.name} />
 
           <div className="lg:pt-4">
             {onSale && <Badge variant="gold">On sale</Badge>}
@@ -179,6 +175,25 @@ export default async function ProductDetailPage({
                 </li>
               ))}
             </ul>
+
+            {product.specifications && product.specifications.length > 0 && (
+              <section className="mt-8 pt-6 border-t border-border">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+                  Specifications
+                </p>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
+                  {product.specifications.map((s) => (
+                    <div
+                      key={s.label}
+                      className="flex justify-between gap-4 border-b border-border/60 pb-2"
+                    >
+                      <dt className="text-muted-foreground">{s.label}</dt>
+                      <dd className="text-foreground/90 text-right">{s.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
 
             <div className="mt-8">
               <AddToCart product={product} />

@@ -4,6 +4,11 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
 import { slugify } from "@/lib/utils";
 
+const SpecificationEntry = z.object({
+  label: z.string().min(1).max(60),
+  value: z.string().min(1).max(200),
+});
+
 const PatchSchema = z
   .object({
     name: z.string().min(1).max(200).optional(),
@@ -16,8 +21,24 @@ const PatchSchema = z
     stock: z.coerce.number().int().nonnegative().optional(),
     featured: z.boolean().optional(),
     images: z.string().optional(), // newline-separated URLs
+    // JSON-encoded array of { label, value } rows. Empty string clears.
+    specifications: z.string().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "No changes" });
+
+function parseSpecifications(raw: string) {
+  if (raw.trim() === "") return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return null;
+    return arr
+      .map((r) => SpecificationEntry.safeParse(r))
+      .filter((r) => r.success)
+      .map((r) => (r as { success: true; data: { label: string; value: string } }).data);
+  } catch {
+    return null;
+  }
+}
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -60,6 +81,13 @@ export async function PATCH(
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
+  }
+  if (data.specifications !== undefined) {
+    const specs = parseSpecifications(data.specifications);
+    if (specs !== null) {
+      // Empty array clears the row set; non-empty replaces it.
+      update.specifications = specs.length > 0 ? specs : [];
+    }
   }
 
   try {

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { useToast } from "@/components/ui/toast";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { SpecEditor } from "@/components/admin/spec-editor";
 import type { Category, Product } from "@/types";
 
 const CATEGORY_OPTIONS = [
@@ -200,6 +201,18 @@ export function ProductForm({ initial }: { initial?: Product }) {
           </CardHeader>
           <CardContent>
             <ImageUploader name="images" initialUrls={initial?.images} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Specifications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SpecEditor
+              name="specifications"
+              initial={initial?.specifications}
+            />
           </CardContent>
         </Card>
 

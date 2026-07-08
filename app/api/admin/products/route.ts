@@ -5,6 +5,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 
+// Serialized as JSON in a hidden input from the admin form.
+const SpecificationEntry = z.object({
+  label: z.string().min(1).max(60),
+  value: z.string().min(1).max(200),
+});
+
 const ProductSchema = z.object({
   name: z.string().min(1),
   tagline: z.string().min(1),
@@ -15,7 +21,25 @@ const ProductSchema = z.object({
   collection: z.string().optional(),
   stock: z.coerce.number().int().nonnegative(),
   images: z.string(),
+  // Optional JSON-encoded array of { label, value } rows. The admin form
+  // stringifies its editor state into a hidden `specifications` input.
+  specifications: z.string().optional(),
 });
+
+function parseSpecifications(raw?: string) {
+  if (!raw) return undefined;
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return undefined;
+    const cleaned = arr
+      .map((r) => SpecificationEntry.safeParse(r))
+      .filter((r) => r.success)
+      .map((r) => (r as { success: true; data: { label: string; value: string } }).data);
+    return cleaned;
+  } catch {
+    return undefined;
+  }
+}
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -47,6 +71,8 @@ export async function POST(req: Request) {
     });
   }
 
+  const specs = parseSpecifications(data.specifications);
+
   const product = await prisma.product.create({
     data: {
       slug: slugify(data.name),
@@ -61,6 +87,7 @@ export async function POST(req: Request) {
       colors: [],
       materials: [],
       images,
+      specifications: specs && specs.length > 0 ? specs : undefined,
     },
     select: { id: true, slug: true },
   });

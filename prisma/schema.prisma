@@ -107,6 +107,11 @@ model Product {
   colors      Json
   materials   Json
   images      Json
+  // Free-form key/value spec table shown on the PDP — dimensions, weight,
+  // laptop fit, closure type, whatever varies per SKU. Stored as
+  // `[{ label: "Dimensions", value: "28 × 32 × 12 cm" }, ...]` so admins
+  // can add whichever rows make sense for each product.
+  specifications Json?
   stock       Int       @default(0)
   featured    Boolean   @default(false)
   rating      Float     @default(0)

@@ -41,7 +41,15 @@ export interface Product {
   rating: number;
   reviewCount: number;
   reviews?: ProductReview[];
+  // Structured spec table for the PDP — dimensions, weight, laptop fit,
+  // closure, etc. Admin can add whichever rows apply per SKU.
+  specifications?: ProductSpecification[];
   createdAt: string;
+}
+
+export interface ProductSpecification {
+  label: string;
+  value: string;
 }
 
 export interface CartLine {
