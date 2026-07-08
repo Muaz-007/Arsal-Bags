@@ -129,15 +129,46 @@ export function VerifySignupForm({
         return;
       }
 
+      // Try the silent sign-in path first — if the sign-up flow just
+      // handed us the password via sessionStorage, we can create the
+      // session ourselves and skip the extra /auth/login stop. Scrub the
+      // stashed password immediately (success or failure) so it never
+      // outlives this handler.
+      let stashedPassword: string | null = null;
+      try {
+        stashedPassword = sessionStorage.getItem("bagsart-pending-signup-pw");
+      } catch {
+        // No storage access — fall through to the /auth/login fallback.
+      }
+      if (stashedPassword) {
+        try {
+          sessionStorage.removeItem("bagsart-pending-signup-pw");
+        } catch {
+          // best-effort cleanup only
+        }
+        const signInRes = await signIn("credentials", {
+          email,
+          password: stashedPassword,
+          redirect: false,
+        });
+        if (!signInRes?.error) {
+          push({ title: "Welcome to BagsArt", tone: "success" });
+          // Land on the caller-provided page (e.g. /checkout when this
+          // flow started from the checkout redirect). Falls back to home.
+          router.push(callbackUrl ?? "/");
+          router.refresh();
+          return;
+        }
+        // Silent sign-in failed for some reason (throttled, transient) —
+        // drop through to the manual sign-in fallback below.
+      }
+
+      // Fallback: no stashed password, or the auto sign-in didn't take.
       push({
         title: "Email verified",
         description: "You can sign in now.",
         tone: "success",
       });
-      // Send them to login with the email prefilled — we don't have the
-      // password on this page to auto-sign-in. Carry the callbackUrl
-      // through so a checkout-originated signup lands them back on
-      // /checkout after the final login step.
       const cbParam = callbackUrl
         ? `&callbackUrl=${encodeURIComponent(callbackUrl)}`
         : "";

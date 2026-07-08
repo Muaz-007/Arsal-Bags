@@ -467,11 +467,21 @@ function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
         });
         return;
       }
-      // Every new account now goes through email verification. We route
-      // to /auth/verify-signup with the email prefilled so the user just
-      // types the 6-digit code we just emailed them. Pass callbackUrl
-      // through so the whole signup → verify → login chain lands the user
-      // where they started (e.g. back on /checkout).
+      // Every new account now goes through email verification. Stash the
+      // freshly-typed password in sessionStorage so the verify page can
+      // silently sign the user in the moment the 6-digit code checks out —
+      // otherwise they'd land on /auth/login and re-type the same
+      // password they set 15 seconds ago. sessionStorage clears when the
+      // tab closes, and we scrub it immediately after a successful login.
+      try {
+        sessionStorage.setItem(
+          "bagsart-pending-signup-pw",
+          String(payload.password ?? "")
+        );
+      } catch {
+        // Private mode / storage quota — the verify page falls back to
+        // routing through /auth/login, which still works.
+      }
       push({
         title: "Check your inbox",
         description: `We sent a 6-digit code to ${data.email ?? payload.email}.`,
