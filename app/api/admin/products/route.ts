@@ -82,7 +82,10 @@ export async function POST(req: Request) {
       price: data.price,
       compareAt: data.compareAt,
       category: data.category,
-      collection: data.collection,
+      // Empty string means the admin picked "None" from the dropdown —
+      // treat it as null so the DB query `where: { collection: "" }` from
+      // a stray navbar link never accidentally matches a bunch of rows.
+      collection: data.collection?.trim() ? data.collection : null,
       stock: data.stock,
       colors: [],
       materials: [],

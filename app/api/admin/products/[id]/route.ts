@@ -73,7 +73,12 @@ export async function PATCH(
   if (data.price !== undefined) update.price = data.price;
   if (data.compareAt !== undefined) update.compareAt = data.compareAt;
   if (data.category !== undefined) update.category = data.category;
-  if (data.collection !== undefined) update.collection = data.collection;
+  if (data.collection !== undefined) {
+    // Empty string from the "None" option → null so it clears cleanly.
+    update.collection = data.collection && data.collection.trim() !== ""
+      ? data.collection
+      : null;
+  }
   if (data.stock !== undefined) update.stock = data.stock;
   if (data.featured !== undefined) update.featured = data.featured;
   if (data.images !== undefined) {

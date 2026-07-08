@@ -31,8 +31,9 @@ import { useSearchPanel } from "@/store/search";
 
 const NAV_LINKS = [
   { href: "/products", label: "Shop" },
-  { href: "/products?category=tote", label: "Totes" },
-  { href: "/products?category=backpack", label: "Backpacks" },
+  { href: "/products?collection=formal", label: "Formal" },
+  { href: "/products?collection=semi-formal", label: "Semi-formal" },
+  { href: "/products?category=wallet", label: "Wallets" },
   { href: "/products?collection=heritage", label: "New" },
   { href: "/about", label: "The Studio" },
   { href: "/contact", label: "Get in touch" },

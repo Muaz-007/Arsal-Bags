@@ -21,6 +21,17 @@ const CATEGORY_OPTIONS = [
   { value: "wallet", label: "Wallet" },
 ];
 
+// Collections drive the navbar shortcuts — the storefront routes
+// "Formal", "Semi-formal" and "New" all read this field. Keeping the
+// admin form a dropdown (rather than free text) avoids the typos that
+// used to break those links (e.g. `Formal ` with a trailing space).
+const COLLECTION_OPTIONS = [
+  { value: "", label: "None" },
+  { value: "formal", label: "Formal" },
+  { value: "semi-formal", label: "Semi-formal" },
+  { value: "heritage", label: "New (Heritage)" },
+];
+
 /**
  * Shared product form — used by both "Add product" and "Edit product".
  * When `initial` is passed, the form pre-fills + the submit hits the PATCH
@@ -34,6 +45,7 @@ export function ProductForm({ initial }: { initial?: Product }) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [category, setCategory] = useState<Category>(initial?.category ?? "tote");
+  const [collection, setCollection] = useState<string>(initial?.collection ?? "");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -185,12 +197,17 @@ export function ProductForm({ initial }: { initial?: Product }) {
               <input type="hidden" name="category" value={category} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="collection">Collection</Label>
-              <Input
-                id="collection"
-                name="collection"
-                defaultValue={initial?.collection ?? ""}
+              <Label>Collection</Label>
+              <Dropdown
+                value={collection}
+                onChange={(v) => setCollection(v)}
+                options={COLLECTION_OPTIONS}
               />
+              <input type="hidden" name="collection" value={collection} />
+              <p className="text-[11px] text-muted-foreground">
+                Drives the "Formal", "Semi-formal", and "New" navbar
+                shortcuts.
+              </p>
             </div>
           </CardContent>
         </Card>
