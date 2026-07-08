@@ -72,6 +72,14 @@ export function Navbar() {
   if (isAdminRoute) return null;
 
   return (
+    // Fragment (not a single element) is deliberate: the mobile drawer and
+    // search panel MUST render as siblings of the sticky header, not
+    // children. When the header switches to `backdrop-blur-xl` on scroll,
+    // that filter creates a containing block for descendant `position:
+    // fixed` elements — which pinned the drawer to the 64px header height,
+    // so it appeared "behind" the page and only surfaced when the user
+    // scrolled back to the top.
+    <>
     <header
       className={cn(
         "sticky top-0 z-50 transition-all duration-500",
@@ -126,9 +134,11 @@ export function Navbar() {
           </button>
         </div>
       </div>
+    </header>
 
-      {/* Mobile slide-in side drawer */}
-      <AnimatePresence>
+    {/* Mobile slide-in side drawer — rendered OUTSIDE the header for the
+        containing-block reason described above. */}
+    <AnimatePresence>
         {open && (
           <>
             <motion.div
@@ -321,7 +331,7 @@ export function Navbar() {
       </AnimatePresence>
 
       <SearchPanel />
-    </header>
+    </>
   );
 }
 
