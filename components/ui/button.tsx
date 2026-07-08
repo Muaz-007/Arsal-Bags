@@ -38,7 +38,7 @@ export interface ButtonProps
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", size = "md", className, href, loading, children, disabled, ...props }, ref) => {
+  ({ variant = "primary", size = "md", className, href, loading, children, disabled, onClick, ...props }, ref) => {
     const classes = cn(
       "inline-flex items-center justify-center gap-2 font-medium select-none",
       "transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -50,8 +50,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     if (href) {
+      // Forward onClick to the Link so callers can still run cleanup
+      // (e.g. closing a drawer) on click — before this was dropped and
+      // `<Button href onClick>` silently no-op'd the handler.
       return (
-        <Link href={href} className={classes}>
+        <Link
+          href={href}
+          className={classes}
+          onClick={onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>}
+        >
           {children}
         </Link>
       );
@@ -62,6 +69,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={classes}
         disabled={disabled || loading}
+        onClick={onClick}
         {...props}
       >
         {loading && (

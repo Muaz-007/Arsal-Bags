@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
@@ -29,8 +30,18 @@ export function CartDrawer() {
   const totalItems = useCart((s) => s.totalItems());
   const update = useCart((s) => s.update);
   const remove = useCart((s) => s.remove);
+  const pathname = usePathname();
 
   useBodyScrollLock(open);
+
+  // Close on route change so navigating from inside the drawer (View bag,
+  // Checkout, product link) always dismisses it — even when the target
+  // route is the same as the current one and Next.js doesn't fire a
+  // navigation event, the pathname value still churns.
+  useEffect(() => {
+    if (open) close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // Esc to close
   useEffect(() => {
