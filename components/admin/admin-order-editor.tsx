@@ -110,7 +110,7 @@ export function AdminOrderEditor({ order }: { order: Order }) {
           />
           <p className="text-[11px] text-muted-foreground">
             If set, the customer sees a "Track with courier" link on their
-            order page.
+            order page .
           </p>
         </div>
 
