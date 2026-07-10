@@ -95,7 +95,10 @@ export default async function OrdersPage() {
                       key={item.productId}
                       className="px-5 py-4 grid grid-cols-[60px_1fr_auto] gap-4 items-center"
                     >
-                      <div className="relative aspect-square rounded-md overflow-hidden bg-muted">
+                      <Link
+                        href={`/dashboard/orders/${o.id}`}
+                        className="relative aspect-square rounded-md overflow-hidden bg-muted"
+                      >
                         <Image
                           src={item.image}
                           alt={item.name}
@@ -103,18 +106,21 @@ export default async function OrdersPage() {
                           sizes="60px"
                           className="object-cover"
                         />
-                      </div>
+                      </Link>
                       <div className="min-w-0">
-                        {item.slug ? (
-                          <Link
-                            href={`/products/${item.slug}`}
-                            className="text-sm font-medium hover:underline decoration-gold underline-offset-4"
-                          >
-                            {item.name}
-                          </Link>
-                        ) : (
-                          <p className="text-sm font-medium">{item.name}</p>
-                        )}
+                        {/* Link the item back to the order detail, not
+                            the product page — the shopper opened this
+                            screen to check on THIS order, so keeping the
+                            click inside the dashboard is the expected
+                            move. A "Buy again" style link back to the
+                            product page can slot into the order detail
+                            view instead. */}
+                        <Link
+                          href={`/dashboard/orders/${o.id}`}
+                          className="text-sm font-medium hover:underline decoration-gold underline-offset-4"
+                        >
+                          {item.name}
+                        </Link>
                         <p className="text-xs text-muted-foreground">
                           Qty {item.quantity}
                           {item.color && ` · ${item.color}`}

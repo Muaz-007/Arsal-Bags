@@ -223,17 +223,23 @@ export function VerifySignupForm({
   return (
     <Card>
       <CardContent className="p-6 sm:p-8 space-y-6">
-        {/* Editable email so the user can correct a typo without going
-            back — we then verify against whatever they type. */}
+        {/* The email is fixed at this step. Making it editable used to
+            look helpful ("fix a typo") but any change here just breaks
+            verification — the code was mailed to the original address,
+            and the silent sign-in that runs after verify uses the
+            password we stashed against that same address. A typo means
+            the user has to go back to /auth/signup anyway. */}
         <div className="space-y-1.5">
           <Label>Email</Label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@studio.com"
-            autoComplete="email"
-          />
+          <div className="rounded-md border border-input bg-muted/40 px-3 py-2.5 text-sm flex items-center justify-between gap-3">
+            <span className="truncate font-medium">{email || "—"}</span>
+            <a
+              href="/auth/signup"
+              className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground shrink-0"
+            >
+              Change
+            </a>
+          </div>
         </div>
 
         <div className="space-y-2">
