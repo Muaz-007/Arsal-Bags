@@ -57,7 +57,14 @@ export function ProductCard({
         <button
           aria-label="Toggle wishlist"
           onClick={(e) => {
+            // The heart sits inside the product's `<Link>`. `preventDefault`
+            // stops the browser navigating, but the click still bubbles up
+            // — nextjs-toploader hears the anchor click and starts its
+            // progress bar, which then never gets a navigation-complete
+            // signal and crawls forever. Stop the bubble here so the
+            // loader (and any parent click handlers) stays quiet.
             e.preventDefault();
+            e.stopPropagation();
             toggle(product.id);
           }}
           className={cn(

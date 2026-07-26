@@ -296,28 +296,45 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
       password: form.get("password"),
       redirect: false,
     });
-    setLoading(false);
+
     if (res?.error) {
-      // Generic message — never reveal whether email or password was wrong.
+      // Only drop the loading state on FAILURE — on success we keep the
+      // button spinning until navigation actually kicks in, so there's no
+      // "dead beat" where the button looks done but the page hasn't
+      // started transitioning yet. Combined with the top progress bar,
+      // the user always sees continuous feedback.
+      setLoading(false);
+      setPassword(""); // never echo back a bad password
       const msg = "Email or password is wrong.";
       setError(msg);
       push({ title: "Sign-in failed", description: msg, tone: "error" });
-      setPassword(""); // clear the password input on every failed attempt
       return;
     }
+
     push({ title: "Welcome back", tone: "success" });
-    const session = await getSession();
-    const role = (session?.user as { role?: string } | undefined)?.role;
-    // Admins always land in /admin regardless of callbackUrl — an admin
-    // typing a customer URL almost certainly meant to check the panel.
-    // Everyone else honours the callbackUrl if present (e.g. the checkout
-    // page bouncing a guest through login).
-    const dest =
-      role === "admin"
-        ? "/admin"
-        : callbackUrl ?? "/";
-    router.push(dest);
+
+    // Optimistic redirect — push to the caller's destination IMMEDIATELY
+    // so the top progress bar takes over the "something is happening"
+    // signal and the login form starts unmounting. Waiting on
+    // `getSession()` here (previously ~200-500ms) made the button spin
+    // for a beat after the "Welcome back" toast fired, which felt broken.
+    const initialDest = callbackUrl ?? "/";
+    router.push(initialDest);
     router.refresh();
+
+    // Admin auto-redirect is a background enhancement: fetch the session
+    // AFTER the initial navigation is underway, and if the user turns
+    // out to be an admin (and we didn't already land them via
+    // callbackUrl), bounce them across to /admin. Second push is
+    // near-instant because Next.js prefetches internal routes.
+    if (!callbackUrl) {
+      getSession().then((session) => {
+        const role = (session?.user as { role?: string } | undefined)?.role;
+        if (role === "admin") {
+          router.push("/admin");
+        }
+      });
+    }
   }
 
   return (
