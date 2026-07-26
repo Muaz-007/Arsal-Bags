@@ -452,22 +452,22 @@ export const COUPONS: Coupon[] = [
 
 export const TESTIMONIALS = [
   {
-    name: "Naomi Aldridge",
-    role: "Editor, Studio Magazine",
+    name: "Ayesha Malik",
+    role: "Editor, Karachi",
     quote:
-      "BagsArt is the rare label that feels both quiet and confident. The Florence Tote is the only bag I've carried daily for six months.",
+      "BagsArt is the rare Pakistani label that feels quiet and confident at once. The Florence Tote is the only bag I've carried to work every day for six months.",
   },
   {
-    name: "Idris Khoury",
-    role: "Architect",
+    name: "Hamza Sheikh",
+    role: "Architect, Lahore",
     quote:
-      "The hardware on my Atelier Backpack still feels new after a year of commuting. Beautifully understated design.",
+      "The hardware on my Atelier Backpack still feels new after a year of commuting between site visits. Beautifully understated — nothing shouty.",
   },
   {
-    name: "Léa Sorrentino",
-    role: "Gallerist, Milan",
+    name: "Sana Iqbal",
+    role: "Curator, Islamabad",
     quote:
-      "I bought the Milano Shoulder for a single opening. I haven't carried anything else to one since.",
+      "I bought the Milano Shoulder for a single gallery opening. I haven't carried anything else to one since — reads as sharp with a saree or a suit.",
   },
 ];
 

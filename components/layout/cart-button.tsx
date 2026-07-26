@@ -22,6 +22,15 @@ export function CartButton() {
   const openDrawer = useCart((s) => s.openDrawer);
   const prev = useRef(totalItems);
   const [pulse, setPulse] = useState(false);
+  // Zustand's persist middleware rehydrates from localStorage on the
+  // client — so on the very first render the server-produced HTML shows
+  // `totalItems = 0` while the client already knows it's higher. Rendering
+  // the count badge before we've mounted causes a React hydration error
+  // ("Expected server HTML to contain a matching <span>"). Flip `mounted`
+  // in a client-only effect and gate the count-dependent UI on it.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const displayCount = mounted ? totalItems : 0;
 
   useEffect(() => {
     if (totalItems > prev.current) {
@@ -37,7 +46,7 @@ export function CartButton() {
     <button
       type="button"
       onClick={() => openDrawer()}
-      aria-label={`Cart (${totalItems} ${totalItems === 1 ? "item" : "items"})`}
+      aria-label={`Cart (${displayCount} ${displayCount === 1 ? "item" : "items"})`}
       className={cn(
         "relative h-10 w-10 grid place-items-center rounded-full transition-all",
         pulse ? "bg-gold/10 ring-2 ring-gold/40" : "hover:bg-muted"
@@ -56,9 +65,9 @@ export function CartButton() {
         />
       </motion.span>
 
-      {totalItems > 0 && (
+      {displayCount > 0 && (
         <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 grid place-items-center text-[10px] font-medium rounded-full bg-gold text-black shadow-sm">
-          {totalItems}
+          {displayCount}
         </span>
       )}
 

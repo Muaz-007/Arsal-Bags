@@ -75,7 +75,7 @@ export function ReviewForm({
         return;
       }
       push({
-        title: isEdit ? "Review updated" : "Review posted",
+        title: isEdit ? "Review updated" : "Thanks for the review",
         description: isEdit
           ? "Your changes are live."
           : "Thanks for sharing — it'll help other customers.",

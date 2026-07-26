@@ -6,8 +6,7 @@ import { SummerSale } from "@/components/home/summer-sale";
 import { VarietyCta } from "@/components/home/variety-cta";
 import { CategoriesGrid } from "@/components/home/categories-grid";
 import { Testimonials } from "@/components/home/testimonials";
-import { Newsletter } from "@/components/home/newsletter";
-import { getStorefrontConfig } from "@/lib/queries";
+import { getFeaturedReviews, getStorefrontConfig } from "@/lib/queries";
 
 interface AdminStripItem {
   id: string;
@@ -36,8 +35,20 @@ function toStripItems(items: AdminStripItem[] | null): StripItem[] | undefined {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const rawStrip = await getStorefrontConfig<AdminStripItem[]>("strip");
+  const [rawStrip, featuredReviews] = await Promise.all([
+    getStorefrontConfig<AdminStripItem[]>("strip"),
+    getFeaturedReviews(),
+  ]);
   const stripItems = toStripItems(rawStrip);
+
+  const testimonials = featuredReviews.map((r) => ({
+    id: r.id,
+    author: r.author,
+    role: r.role,
+    quote: r.quote,
+    productSlug: r.productSlug || undefined,
+    productName: r.productName || undefined,
+  }));
 
   return (
     <>
@@ -48,8 +59,10 @@ export default async function HomePage() {
       <SummerSale />
       <VarietyCta />
       <CategoriesGrid />
-      <Testimonials />
-      <Newsletter />
+      <Testimonials items={testimonials} />
+      {/* Newsletter CTA lives in the footer — kept it out of the home
+          page to avoid duplicating the form immediately above its own
+          footer copy. */}
     </>
   );
 }

@@ -72,11 +72,17 @@ export async function POST(req: Request) {
         title,
         body: text,
         images,
+        // Reviews start as unapproved — admin moderates them from
+        // /admin/orders. Only approved reviews count toward the product's
+        // public rating aggregate.
+        approved: false,
       },
     });
 
+    // Recompute using ONLY approved reviews so pending / rejected content
+    // doesn't skew the star rating shoppers see on the storefront.
     const agg = await tx.review.aggregate({
-      where: { productId },
+      where: { productId, approved: true },
       _avg: { rating: true },
       _count: { _all: true },
     });
@@ -84,11 +90,13 @@ export async function POST(req: Request) {
     await tx.product.update({
       where: { id: productId },
       data: {
-        rating: agg._avg.rating ?? rating,
+        rating: agg._avg.rating ?? 0,
         reviewCount: agg._count._all,
       },
     });
   });
 
-  return NextResponse.json({ ok: true });
+  // Signal to the client that the review is queued for moderation so the
+  // form can show a friendlier "we'll publish it once approved" toast.
+  return NextResponse.json({ ok: true, pending: true });
 }

@@ -46,7 +46,7 @@ export default function FaqPage() {
     <ProsePage
       eyebrow="Help"
       title="Frequently asked"
-      intro="If your question isn't here, email us at bags.art.pk@gmail.com — we read every message ourselves."
+      intro="If your question isn't here, email us at hello@bagsart.store — we read every message ourselves."
     >
       <div className="divide-y divide-border">
         {QA.map((item) => (

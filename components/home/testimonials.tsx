@@ -1,11 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionHeader } from "@/components/ui/section";
-import { TESTIMONIALS } from "@/lib/mock-data";
 import { Quote } from "lucide-react";
 
-export function Testimonials() {
+export type TestimonialItem = {
+  id: string;
+  author: string;
+  role: string;
+  quote: string;
+  productSlug?: string;
+  productName?: string;
+};
+
+/**
+ * Homepage social-proof section. Rendered from real DB reviews when the
+ * admin has featured any (see `getFeaturedReviews`), and hidden entirely
+ * when the list is empty — a page with 0 testimonials feels quieter than
+ * one padded with fake ones.
+ */
+export function Testimonials({ items }: { items: TestimonialItem[] }) {
+  if (items.length === 0) return null;
+
   return (
     <section className="relative border-y border-border bg-muted/40 py-24 overflow-hidden">
       {/* Subtle gold glow accents */}
@@ -19,9 +36,9 @@ export function Testimonials() {
           align="center"
         />
         <div className="grid gap-6 md:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
+          {items.map((t, i) => (
             <motion.figure
-              key={t.name}
+              key={t.id}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
@@ -38,10 +55,18 @@ export function Testimonials() {
                 “{t.quote}”
               </blockquote>
               <figcaption className="mt-6 pt-5 border-t border-border/60">
-                <p className="font-display text-base">{t.name}</p>
+                <p className="font-display text-base">{t.author}</p>
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mt-1">
                   {t.role}
                 </p>
+                {t.productSlug && t.productName && (
+                  <Link
+                    href={`/products/${t.productSlug}`}
+                    className="mt-2 inline-block text-[11px] text-muted-foreground hover:text-foreground underline decoration-gold underline-offset-4"
+                  >
+                    On the {t.productName}
+                  </Link>
+                )}
               </figcaption>
             </motion.figure>
           ))}

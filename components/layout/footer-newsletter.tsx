@@ -55,16 +55,19 @@ export function FooterNewsletter() {
 
   if (done) {
     return (
-      <p className="mt-4 text-sm text-muted-foreground">
-        You're on the list — watch your inbox.
-      </p>
+      <div className="rounded-xl border border-gold/30 bg-gold/10 px-4 py-4 text-sm">
+        <p className="font-medium">You're on the list.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Check your inbox — a welcome note is on its way.
+        </p>
+      </div>
     );
   }
 
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-4 flex gap-2 max-w-sm"
+      className="flex flex-col sm:flex-row gap-2.5"
       aria-label="Subscribe to the BagsArt letter"
     >
       <Input
@@ -72,11 +75,11 @@ export function FooterNewsletter() {
         placeholder="you@studio.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="h-10 flex-1"
+        className="h-12 flex-1 text-base"
         required
         aria-label="Email address"
       />
-      <Button type="submit" size="sm" variant="gold" loading={loading}>
+      <Button type="submit" size="lg" variant="gold" loading={loading}>
         Subscribe
       </Button>
     </form>

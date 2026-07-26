@@ -68,10 +68,10 @@ export default function ShippingPage() {
           </a>{" "}
           page. To start a return, email{" "}
           <a
-            href="mailto:bags.art.pk@gmail.com"
+            href="mailto:hello@bagsart.store"
             className="underline decoration-gold underline-offset-4"
           >
-            bags.art.pk@gmail.com
+            hello@bagsart.store
           </a>{" "}
           with your order number.
         </p>

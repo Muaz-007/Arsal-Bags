@@ -99,10 +99,10 @@ export default function RefundsPage() {
           You have <strong>7 days from the delivery date</strong> to request a
           return. To start one, email{" "}
           <a
-            href="mailto:bags.art.pk@gmail.com"
+            href="mailto:hello@bagsart.store"
             className="underline decoration-gold underline-offset-4"
           >
-            bags.art.pk@gmail.com
+            hello@bagsart.store
           </a>{" "}
           with your order number and reason, or WhatsApp us the same. We'll
           reply with the return address and pickup instructions.
@@ -224,10 +224,10 @@ export default function RefundsPage() {
         <p>
           Anything unclear, or a case that doesn't fit the tables above? Email{" "}
           <a
-            href="mailto:bags.art.pk@gmail.com"
+            href="mailto:hello@bagsart.store"
             className="underline decoration-gold underline-offset-4"
           >
-            bags.art.pk@gmail.com
+            hello@bagsart.store
           </a>
           . We read every message ourselves and reply within one business day.
         </p>

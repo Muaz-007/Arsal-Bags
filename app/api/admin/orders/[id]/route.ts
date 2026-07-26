@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth-server";
+import { sendReviewRequest } from "@/lib/email";
 
 const Schema = z
   .object({
@@ -71,6 +72,40 @@ export async function PATCH(
     return NextResponse.json({ ok: true, id: params.id, ...update });
   }
 
+  // Read the current order first so we can detect the delivered
+  // transition and skip the review email if we've already asked once.
+  const existing = await prisma.order
+    .findUnique({
+      where: { id: params.id },
+      select: {
+        status: true,
+        customerEmail: true,
+        customerName: true,
+        reviewRequestedAt: true,
+        items: {
+          include: {
+            product: { select: { slug: true } },
+          },
+        },
+      },
+    })
+    .catch(() => null);
+
+  if (!existing) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  const isFirstDelivery =
+    parsed.data.status === "delivered" &&
+    existing.status !== "delivered" &&
+    !existing.reviewRequestedAt;
+
+  // Stamp `reviewRequestedAt` in the same write so a duplicate PATCH
+  // (double-click, retry) can't fire the email twice.
+  if (isFirstDelivery) {
+    update.reviewRequestedAt = new Date();
+  }
+
   try {
     const updated = await prisma.order.update({
       where: { id: params.id },
@@ -82,6 +117,27 @@ export async function PATCH(
         trackingUrl: true,
       },
     });
+
+    // Fire the review-request email AFTER the DB write commits. Best-
+    // effort: SMTP failures are swallowed by sendEmail, and the timestamp
+    // is already saved so we don't re-try on the next PATCH.
+    if (isFirstDelivery && existing.customerEmail) {
+      const items = existing.items
+        .filter((i) => i.product?.slug) // skip items whose product was deleted
+        .map((i) => ({
+          name: i.name,
+          image: i.image,
+          slug: i.product!.slug,
+        }));
+      if (items.length > 0) {
+        void sendReviewRequest(existing.customerEmail, {
+          id: params.id,
+          customerName: existing.customerName,
+          items,
+        });
+      }
+    }
+
     return NextResponse.json({ ok: true, ...updated });
   } catch {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });

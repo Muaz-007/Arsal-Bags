@@ -109,7 +109,7 @@ function shell({ preheader, title, bodyHtml }: ShellOptions): string {
             <td align="center" style="padding:8px 16px;font-size:12px;color:${TEXT_MUTED};line-height:1.6;">
               <a href="${BASE_URL}" style="color:${TEXT_MUTED};text-decoration:none;">bagsart</a>
               &nbsp;·&nbsp;
-              <a href="mailto:bags.art.pk@gmail.com" style="color:${TEXT_MUTED};text-decoration:none;">bags.art.pk@gmail.com</a>
+              <a href="mailto:hello@bagsart.store" style="color:${TEXT_MUTED};text-decoration:none;">hello@bagsart.store</a>
             </td>
           </tr>
           <tr>
@@ -585,6 +585,196 @@ If that wasn't you, reset your password immediately: ${BASE_URL}/auth/forgot
 Then reply to this email and we'll help lock the account down.
 
 — The BagsArt team`;
+
+  return { html, text };
+}
+
+/* ─── Post-delivery review request ────────────────────────────────────── */
+
+/**
+ * Sent the first time an order is marked delivered. Lists each product in
+ * the order with a direct link to the PDP (with `?review=1` so the review
+ * form auto-opens once we support that flag). Deliberately warm, low
+ * pressure — a real "how did you like it?" note, not a hard ask.
+ */
+export function reviewRequestTemplate(order: {
+  id: string;
+  customerName: string;
+  items: { name: string; image: string; slug: string }[];
+}): { html: string; text: string } {
+  const firstName = order.customerName.split(" ")[0];
+
+  const itemBlocks = order.items
+    .map(
+      (i) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 14px;background:${CARD};border:1px solid ${BORDER};border-radius:12px;">
+        <tr>
+          <td style="padding:14px;width:80px;vertical-align:middle;">
+            <img src="${escape(i.image)}" alt="${escape(i.name)}" width="70" height="70" style="display:block;border-radius:8px;object-fit:cover;" />
+          </td>
+          <td style="padding:14px 14px 14px 0;vertical-align:middle;">
+            <p style="margin:0 0 6px;font-size:15px;font-weight:600;color:${TEXT};">
+              ${escape(i.name)}
+            </p>
+            <a href="${BASE_URL}/products/${escape(i.slug)}?review=1"
+               style="color:${GOLD_DARK};text-decoration:underline;font-size:13px;">
+              Leave a review →
+            </a>
+          </td>
+        </tr>
+      </table>`
+    )
+    .join("");
+
+  const html = shell({
+    preheader: `How did your BagsArt order land?`,
+    title: "How did it land?",
+    bodyHtml: `
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Your order arrived</p>
+      <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
+        How did it land, ${escape(firstName)}?
+      </h1>
+      <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${TEXT};">
+        We hope you're enjoying your new piece. If you have a minute — a
+        short review helps the next buyer decide, and helps us learn what
+        to make more of.
+      </p>
+
+      ${itemBlocks}
+
+      <p style="margin:22px 0 0;font-size:13px;color:${TEXT_MUTED};line-height:1.6;">
+        Anything not right? Just reply to this email — we'll help sort a
+        return or exchange within the 7-day window.
+      </p>
+      <p style="margin:18px 0 0;font-size:15px;color:${TEXT};">
+        — The BagsArt team
+      </p>
+    `,
+  });
+
+  const text = `How did it land, ${firstName}?
+
+We hope you're enjoying your new piece. If you have a minute — a short review helps the next buyer decide, and helps us learn what to make more of.
+
+Leave a review:
+${order.items
+  .map((i) => `· ${i.name}: ${BASE_URL}/products/${i.slug}?review=1`)
+  .join("\n")}
+
+Anything not right? Just reply to this email — we'll help sort a return or exchange within the 7-day window.
+
+— The BagsArt team`;
+
+  return { html, text };
+}
+
+/* ─── Newsletter templates ────────────────────────────────────────────── */
+
+/**
+ * Simple welcome-to-the-list email. Sent once, right after subscribe. Keeps
+ * expectations honest ("one letter a month, no marketing pressure") so the
+ * subscriber isn't surprised by frequency later.
+ *
+ * The unsubscribe link is baked in — good practice even for a welcome
+ * message, and legally required in most jurisdictions.
+ */
+export function newsletterWelcomeTemplate(input: {
+  unsubscribeUrl: string;
+}): { html: string; text: string } {
+  const html = shell({
+    preheader: "One letter a month from the BagsArt workshop.",
+    title: "You're on the list",
+    bodyHtml: `
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">Welcome</p>
+      <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
+        Thanks for signing up.
+      </h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${TEXT};">
+        You'll get one short letter a month — a note whenever a new piece
+        comes out of our Lahore workshop, plus the occasional peek at
+        what's on the cutting table.
+      </p>
+      <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${TEXT};">
+        No marketing pressure. No urgency. Just quiet news of what's next.
+      </p>
+
+      ${ctaButton(`${BASE_URL}/products`, "Browse the catalogue")}
+
+      <p style="margin:24px 0 0;font-size:13px;color:${TEXT_MUTED};line-height:1.6;">
+        — The BagsArt team
+      </p>
+      <p style="margin:18px 0 0;font-size:11px;color:${TEXT_MUTED};line-height:1.5;">
+        Changed your mind?
+        <a href="${input.unsubscribeUrl}" style="color:${GOLD_DARK};text-decoration:underline;">Unsubscribe with one click</a>.
+      </p>
+    `,
+  });
+
+  const text = `You're on the list
+
+Thanks for signing up. You'll get one short letter a month — a note whenever a new piece comes out of our Lahore workshop.
+
+No marketing pressure. Just quiet news of what's next.
+
+Browse the catalogue: ${BASE_URL}/products
+
+— The BagsArt team
+
+Changed your mind? Unsubscribe: ${input.unsubscribeUrl}`;
+
+  return { html, text };
+}
+
+/**
+ * Broadcast template for admin-authored newsletters. Accepts a subject-
+ * like `heading` and a rich `bodyHtml` block that the composer builds
+ * from plain paragraphs — keeping the outer chrome consistent with the
+ * rest of BagsArt's transactional mail.
+ */
+export function newsletterBroadcastTemplate(input: {
+  heading: string;
+  bodyHtml: string;
+  unsubscribeUrl: string;
+}): { html: string; text: string } {
+  const html = shell({
+    preheader: input.heading,
+    title: input.heading,
+    bodyHtml: `
+      <p style="margin:0 0 8px;font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:${TEXT_MUTED};">The BagsArt letter</p>
+      <h1 style="margin:0 0 22px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.2;color:${TEXT};font-weight:600;letter-spacing:-0.4px;">
+        ${escape(input.heading)}
+      </h1>
+      <div style="font-size:15px;line-height:1.7;color:${TEXT};">
+        ${input.bodyHtml}
+      </div>
+      <p style="margin:32px 0 0;font-size:13px;color:${TEXT_MUTED};line-height:1.6;">
+        — The BagsArt team
+      </p>
+      <p style="margin:18px 0 0;font-size:11px;color:${TEXT_MUTED};line-height:1.5;">
+        You're receiving this because you signed up to the BagsArt letter.
+        <a href="${input.unsubscribeUrl}" style="color:${GOLD_DARK};text-decoration:underline;">Unsubscribe</a>.
+      </p>
+    `,
+  });
+
+  // Plain-text fallback: strip tags very loosely — good enough for a11y
+  // clients and for spam filters that penalise HTML-only mail.
+  const bodyText = input.bodyHtml
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+  const text = `${input.heading}
+
+${bodyText}
+
+— The BagsArt team
+
+Unsubscribe: ${input.unsubscribeUrl}`;
 
   return { html, text };
 }

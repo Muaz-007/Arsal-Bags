@@ -42,7 +42,7 @@ export default function GlobalError({
           </h1>
           <p style={{ color: "#a8a29e", lineHeight: 1.5 }}>
             Something went wrong loading the site shell. Please refresh — if it
-            persists, get in touch at bags.art.pk@gmail.com.
+            persists, get in touch at hello@bagsart.store.
           </p>
           {error.digest && (
             <p

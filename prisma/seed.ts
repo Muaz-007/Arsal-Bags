@@ -8,7 +8,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { PRODUCTS, COUPONS, USERS } from "../lib/mock-data";
+import { PRODUCTS, COUPONS, USERS, TESTIMONIALS } from "../lib/mock-data";
 
 const prisma = new PrismaClient();
 
@@ -86,6 +86,67 @@ async function main() {
         value: c.value,
         active: c.active,
         uses: c.uses,
+      },
+    });
+  }
+
+  // ── Featured homepage reviews ────────────────────────────────────────
+  // The three mock testimonials become real Review rows tied to the
+  // products they mention, so the homepage keeps its social proof from
+  // day one but every quote is now a moderatable record the admin can
+  // swap out. Marked approved + featured so they surface immediately.
+  const testimonialProductSlugs = [
+    "florence-tote-cognac",
+    "atelier-backpack-noir",
+    "milano-shoulder-noir",
+  ];
+  for (let i = 0; i < TESTIMONIALS.length; i++) {
+    const t = TESTIMONIALS[i];
+    const productSlug = testimonialProductSlugs[i];
+    if (!productSlug) continue;
+
+    const product = await prisma.product.findUnique({
+      where: { slug: productSlug },
+      select: { id: true },
+    });
+    if (!product) continue;
+
+    // Each seeded testimonial gets its own reviewer user (verified so
+    // they can technically log in). Email is a synthetic address that
+    // won't collide with real signups.
+    const email = `seed.${t.name.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@bagsart.internal`;
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { name: t.name },
+      create: {
+        name: t.name,
+        email,
+        role: "customer",
+        emailVerified: new Date(),
+        // No passwordHash — these are display-only accounts, no login.
+      },
+      select: { id: true },
+    });
+
+    // Idempotent: skip if a review already exists for this (user, product)
+    // pair. Prevents re-seed from duplicating the same testimonial.
+    const existing = await prisma.review.findFirst({
+      where: { userId: user.id, productId: product.id },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    await prisma.review.create({
+      data: {
+        productId: product.id,
+        userId: user.id,
+        author: t.name,
+        rating: 5,
+        title: t.role, // repurpose the "role" line as the review headline
+        body: t.quote,
+        images: [],
+        approved: true,
+        featured: true,
       },
     });
   }

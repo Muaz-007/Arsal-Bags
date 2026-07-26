@@ -165,12 +165,23 @@ model Review {
   // Customer-uploaded photos (Cloudinary URLs). Stored as JSON so we can
   // grow the shape (thumbnails, dimensions) without a migration.
   images    Json     @default("[]")
+  // Moderation flag — reviews land here as `false` and are hidden from
+  // the public PDP + excluded from the product's rating aggregate until
+  // an admin approves them from `/admin/orders`. Prevents drive-by spam
+  // and slanderous content from appearing on the storefront.
+  approved  Boolean  @default(false)
+  // "Feature on homepage" — admin picks a small handful of approved
+  // reviews to rotate through the homepage testimonials section. Only
+  // meaningful when `approved` is true; the UI enforces that ordering.
+  featured  Boolean  @default(false)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([approved, createdAt])
 }
 
 model Order {
@@ -198,6 +209,10 @@ model Order {
   // as raw text (capped in the API) rather than an enum so the admin can
   // read the "Other" details verbatim.
   cancellationReason String?
+  // Set the first time an admin marks the order delivered — the review
+  // request email fires on that transition. Presence-check prevents a
+  // second email if the admin toggles the status by mistake.
+  reviewRequestedAt  DateTime?
 
   user           User?       @relation(fields: [userId], references: [id])
   items          OrderItem[]

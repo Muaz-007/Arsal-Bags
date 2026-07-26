@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Navbar } from "@/components/layout/navbar";
@@ -7,11 +8,12 @@ import { Footer } from "@/components/layout/footer";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { WishlistFab } from "@/components/layout/wishlist-fab";
+import { WhatsAppFab } from "@/components/layout/whatsapp-fab";
 import { WishlistSync } from "@/components/layout/wishlist-sync";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { CookieBanner } from "@/components/layout/cookie-banner";
 import { ToastViewport } from "@/components/ui/toast";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, SUPPORT_EMAIL } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -87,7 +89,7 @@ const organizationJsonLd = {
   },
   contactPoint: {
     "@type": "ContactPoint",
-    email: "bags.art.pk@gmail.com",
+    email: SUPPORT_EMAIL,
     contactType: "customer support",
     areaServed: "Worldwide",
   },
@@ -139,12 +141,30 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col">
+        {/* Thin top progress bar that surfaces on route transitions —
+            gives visual feedback the moment a link is clicked so the site
+            never feels like it stalled. Gold to match the brand accent.
+            initialPosition + slower crawl so the bar is genuinely visible
+            on localhost where navigations finish in a single frame; on
+            production the natural latency does most of the work. */}
+        <NextTopLoader
+          color="#C9A961"
+          height={3}
+          showSpinner={false}
+          shadow="0 0 10px rgba(201,169,97,0.55), 0 0 5px rgba(201,169,97,0.6)"
+          initialPosition={0.25}
+          crawlSpeed={280}
+          speed={400}
+          easing="ease"
+          zIndex={9999}
+        />
         <Providers>
           <Navbar />
           <main className="flex-1">
             <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
+          <WhatsAppFab />
           <WishlistFab />
           <ScrollToTop />
           <WishlistSync />

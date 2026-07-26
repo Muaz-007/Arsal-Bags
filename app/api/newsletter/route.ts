@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { sendNewsletterWelcome } from "@/lib/email";
+import { unsubscribeUrl } from "@/lib/newsletter-token";
+import { SITE_URL } from "@/lib/site";
 import {
   getClientIp,
   rateLimit,
@@ -34,8 +37,18 @@ export async function POST(req: Request) {
   const email = parsed.data.email.toLowerCase().trim();
   const source = parsed.data.source ?? "footer";
 
+  // Track whether this address is genuinely new so we only send the
+  // welcome email once — re-subscribing an existing address is a common
+  // no-op that shouldn't re-fire the welcome.
+  let newSubscriber = false;
+
   if (prisma) {
     try {
+      const existing = await prisma.subscriber.findUnique({
+        where: { email },
+        select: { id: true, active: true },
+      });
+      newSubscriber = !existing;
       await prisma.subscriber.upsert({
         where: { email },
         update: { active: true },
@@ -48,6 +61,18 @@ export async function POST(req: Request) {
     }
   } else {
     console.info("[newsletter/mock] subscribed", email);
+    newSubscriber = true;
+  }
+
+  // Fire-and-forget welcome email. Failing silently is fine — the row is
+  // already saved and the user got their success toast.
+  if (newSubscriber) {
+    try {
+      const link = unsubscribeUrl(email, SITE_URL);
+      await sendNewsletterWelcome(email, link);
+    } catch (err) {
+      console.error("[newsletter] welcome email failed", err);
+    }
   }
 
   return NextResponse.json({ ok: true });

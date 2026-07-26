@@ -18,12 +18,16 @@ const CATEGORIES = [
   { value: "wallet", label: "Wallets" },
 ];
 
+// Buckets match BagsArt's actual PKR spread — wallets sit under Rs 3k,
+// everyday totes / crossbodies in the Rs 3-6k band, backpacks + duffels
+// at the top of the current range. Rework these once real pricing shifts.
 const PRICE_RANGES = [
   { value: "", label: "Any price" },
-  { value: "0-20000", label: "Under Rs 20,000" },
-  { value: "20000-40000", label: "Rs 20,000 – Rs 40,000" },
-  { value: "40000-60000", label: "Rs 40,000 – Rs 60,000" },
-  { value: "60000-", label: "Rs 60,000+" },
+  { value: "0-3000", label: "Under Rs 3,000" },
+  { value: "3000-5000", label: "Rs 3,000 – Rs 5,000" },
+  { value: "5000-7000", label: "Rs 5,000 – Rs 7,000" },
+  { value: "7000-10000", label: "Rs 7,000 – Rs 10,000" },
+  { value: "10000-", label: "Rs 10,000+" },
 ];
 
 /**

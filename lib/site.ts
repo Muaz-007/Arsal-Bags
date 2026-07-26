@@ -22,3 +22,12 @@ export const SITE_URL = (() => {
 export const SITE_NAME = "BagsArt";
 export const SITE_DESCRIPTION =
   "BagsArt is a small leather goods studio in Lahore. Premium quality bags in full-grain leather — made in small batches.";
+
+/**
+ * Public-facing support email. All customer-visible surfaces (footer,
+ * legal pages, help pages, transactional email footers, error pages)
+ * read from this so we can move addresses without hunting through the
+ * codebase. Backed by ImprovMX → forwards to the team's inbox, and by
+ * Resend SMTP → replies sent as this address via Gmail "Send As".
+ */
+export const SUPPORT_EMAIL = "hello@bagsart.store";

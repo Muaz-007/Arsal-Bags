@@ -1,11 +1,14 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import {
   emailChangeTemplate,
+  newsletterBroadcastTemplate,
+  newsletterWelcomeTemplate,
   orderCancelledAdminTemplate,
   orderCancelledCustomerTemplate,
   orderConfirmationTemplate,
   passwordChangedTemplate,
   passwordResetTemplate,
+  reviewRequestTemplate,
   verificationCodeTemplate,
   welcomeTemplate,
 } from "@/lib/email-templates";
@@ -32,9 +35,12 @@ interface EmailPayload {
   text?: string;
   html?: string;
   replyTo?: string;
+  // Extra SMTP headers — e.g. List-Unsubscribe for newsletter mail so
+  // Gmail/Outlook show a native one-click unsubscribe button.
+  headers?: Record<string, string>;
 }
 
-const FROM = process.env.EMAIL_FROM ?? "BagsArt <bags.art.pk@gmail.com>";
+const FROM = process.env.EMAIL_FROM ?? "BagsArt <hello@bagsart.store>";
 
 let transporter: Transporter | null = null;
 let transporterTried = false;
@@ -91,6 +97,7 @@ async function send(payload: EmailPayload): Promise<void> {
     text: payload.text,
     html: payload.html,
     replyTo: payload.replyTo,
+    headers: payload.headers,
   });
 }
 
@@ -130,6 +137,60 @@ export async function sendOrderConfirmation(
     subject: `Order confirmed · ${order.id}`,
     html,
     text,
+  });
+}
+
+export async function sendReviewRequest(
+  to: string,
+  order: {
+    id: string;
+    customerName: string;
+    items: { name: string; image: string; slug: string }[];
+  }
+) {
+  const { html, text } = reviewRequestTemplate(order);
+  return sendEmail({
+    to,
+    subject: `How did your BagsArt order land?`,
+    html,
+    text,
+  });
+}
+
+export async function sendNewsletterWelcome(
+  to: string,
+  unsubscribeUrl: string
+) {
+  const { html, text } = newsletterWelcomeTemplate({ unsubscribeUrl });
+  // List-Unsubscribe headers are picked up by Gmail/Outlook to show a
+  // native "Unsubscribe" button next to the sender — massive spam-folder
+  // avoidance signal. Both header + `mailto` variant included.
+  return sendEmail({
+    to,
+    subject: "You're on the BagsArt list",
+    html,
+    text,
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
+  });
+}
+
+export async function sendNewsletterBroadcast(
+  to: string,
+  input: { heading: string; bodyHtml: string; unsubscribeUrl: string }
+) {
+  const { html, text } = newsletterBroadcastTemplate(input);
+  return sendEmail({
+    to,
+    subject: input.heading,
+    html,
+    text,
+    headers: {
+      "List-Unsubscribe": `<${input.unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   });
 }
 

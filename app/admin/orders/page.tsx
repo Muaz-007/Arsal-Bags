@@ -3,7 +3,8 @@ import { Banknote, ChevronRight, CreditCard, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListToolbar } from "@/components/admin/list-toolbar";
-import { listOrders } from "@/lib/queries";
+import { ReviewsSection } from "@/components/admin/reviews-section";
+import { listAllReviews, listOrders } from "@/lib/queries";
 import { formatDate, formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,10 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: SP;
 }) {
-  const orders = await listOrders();
+  const [orders, reviews] = await Promise.all([
+    listOrders(),
+    listAllReviews(),
+  ]);
 
   const q = (first(searchParams.q) ?? "").toLowerCase();
   const status = first(searchParams.status);
@@ -53,7 +57,7 @@ export default async function AdminOrdersPage({
   const hasQuery = !!(q || status || payment);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <header>
         <h1 className="font-display text-3xl">Orders</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -183,6 +187,10 @@ export default async function AdminOrdersPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Reviews moderation — a sibling section rather than a new route
+          since reviews are a post-purchase concern living next to orders. */}
+      <ReviewsSection initial={reviews} />
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function TermsPage() {
     <ProsePage
       eyebrow="Legal"
       title="Terms of service"
-      intro="Last updated 25 June 2026. By using this site you agree to these terms. They're written to be readable — if anything is unclear, email bags.art.pk@gmail.com."
+      intro="Last updated 25 June 2026. By using this site you agree to these terms. They're written to be readable — if anything is unclear, email hello@bagsart.store."
     >
       <ProseSection id="account" title="Your account">
         <p>

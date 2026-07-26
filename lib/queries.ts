@@ -228,6 +228,9 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       where: { slug },
       include: {
         reviews: {
+          // Public PDP only shows approved reviews — pending / rejected
+          // sit in the admin queue until moderated.
+          where: { approved: true },
           orderBy: { createdAt: "desc" },
           take: 12,
         },
@@ -462,6 +465,113 @@ export async function listCoupons(): Promise<Coupon[]> {
     }));
   }
   return COUPONS.slice();
+}
+
+// ─── Reviews (admin) ────────────────────────────────────────────────────────
+
+export type AdminReviewRow = {
+  id: string;
+  productId: string;
+  productName: string;
+  productSlug: string;
+  productImage: string;
+  author: string;
+  rating: number;
+  title: string;
+  body: string;
+  images: string[];
+  approved: boolean;
+  featured: boolean;
+  createdAt: string;
+};
+
+export async function listAllReviews(): Promise<AdminReviewRow[]> {
+  if (!prisma) return [];
+  const rows = await prisma.review.findMany({
+    orderBy: [{ approved: "asc" }, { createdAt: "desc" }],
+    include: {
+      product: { select: { name: true, slug: true, images: true } },
+    },
+    take: 500,
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    productId: r.productId,
+    productName: r.product?.name ?? "(deleted product)",
+    productSlug: r.product?.slug ?? "",
+    productImage:
+      Array.isArray(r.product?.images) && r.product!.images.length > 0
+        ? String((r.product!.images as unknown[])[0])
+        : "",
+    author: r.author,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    images: Array.isArray(r.images) ? (r.images as string[]) : [],
+    approved: r.approved,
+    featured: r.featured,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+
+/**
+ * Homepage testimonials source. Returns admin-featured (and approved)
+ * reviews with product info so the section can link out to the PDP.
+ * Ordered newest-first; capped at 6 so a runaway feature list never
+ * turns the section into a scrollable wall.
+ */
+export type HomepageReview = {
+  id: string;
+  productSlug: string;
+  productName: string;
+  author: string;
+  role: string; // repurposed from review title
+  quote: string;
+  rating: number;
+};
+
+export async function getFeaturedReviews(): Promise<HomepageReview[]> {
+  if (!prisma) return [];
+  return tolerant(async () => {
+    const rows = await prisma!.review.findMany({
+      where: { approved: true, featured: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { product: { select: { name: true, slug: true } } },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      productSlug: r.product?.slug ?? "",
+      productName: r.product?.name ?? "",
+      author: r.author,
+      role: r.title,
+      quote: r.body,
+      rating: r.rating,
+    }));
+  }, []);
+}
+
+// ─── Newsletter subscribers ─────────────────────────────────────────────────
+
+export type SubscriberRow = {
+  email: string;
+  source: string | null;
+  active: boolean;
+  createdAt: string;
+};
+
+export async function listSubscribers(): Promise<SubscriberRow[]> {
+  if (!prisma) return [];
+  const rows = await prisma.subscriber.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 500,
+  });
+  return rows.map((s) => ({
+    email: s.email,
+    source: s.source,
+    active: s.active,
+    createdAt: s.createdAt.toISOString(),
+  }));
 }
 
 // ─── Storefront config ─────────────────────────────────────────────────────

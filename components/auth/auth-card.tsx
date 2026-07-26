@@ -36,19 +36,25 @@ type Mode = "signin" | "signup";
 
 const VISUAL_BY_MODE: Record<
   Mode,
-  { quote: string; cite: string; bg: string }
+  { heading: string; pillars: string[]; bg: string }
 > = {
   signin: {
-    quote:
-      "The Florence Tote is the only bag I've carried daily for six months.",
-    cite: "Naomi Aldridge — Editor, Studio Magazine",
+    heading: "Crafted for the everyday, made to last.",
+    pillars: [
+      "Full-grain leather, hand-cut",
+      "Small batches from our Lahore studio",
+      "7-day easy returns",
+    ],
     bg: "from-gold/25 via-muted to-background",
   },
   signup: {
-    quote:
-      "I bought the Milano Shoulder for a single opening. I haven't carried anything else to one since.",
-    cite: "Léa Sorrentino — Gallerist, Milan",
-    bg: "from-rose-300/20 via-amber-100/20 to-background dark:from-rose-900/20 dark:via-amber-900/20",
+    heading: "One account. Faster checkout. Better wishlist.",
+    pillars: [
+      "Save addresses for one-tap orders",
+      "Wishlist syncs across your devices",
+      "First to hear when new pieces drop",
+    ],
+    bg: "from-gold/20 via-amber-100/30 to-background dark:from-gold/15 dark:via-amber-900/15",
   },
 };
 
@@ -125,30 +131,37 @@ export function AuthCard({ initialMode }: { initialMode: Mode }) {
               </p>
             </div>
 
+            {/* Brand pane — replaces the earlier quote/citation block.
+                Reviews live on PDPs + the homepage; the auth screens are
+                the moment to reinforce brand identity, not to run social
+                proof. */}
             <div className="relative">
               <AnimatePresence mode="wait">
-                <motion.blockquote
-                  key={visual.quote}
+                <motion.div
+                  key={visual.heading}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-display text-2xl xl:text-3xl leading-tight"
                 >
-                  “{visual.quote}”
-                </motion.blockquote>
-              </AnimatePresence>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={visual.cite}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="mt-4 text-xs uppercase tracking-[0.22em] text-muted-foreground"
-                >
-                  {visual.cite}
-                </motion.p>
+                  <h2 className="font-display text-2xl xl:text-3xl leading-tight tracking-tight">
+                    {visual.heading}
+                  </h2>
+                  <ul className="mt-6 space-y-2.5">
+                    {visual.pillars.map((p) => (
+                      <li
+                        key={p}
+                        className="flex items-start gap-2.5 text-sm text-foreground/80"
+                      >
+                        <span
+                          aria-hidden
+                          className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-gold shrink-0"
+                        />
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
               </AnimatePresence>
             </div>
 
