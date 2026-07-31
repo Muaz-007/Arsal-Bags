@@ -65,10 +65,14 @@ export default function AboutPage() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border border-border">
+            {/* Landscape-ish 4:3 ratio — the earlier 4:5 portrait made the
+                hero look front-heavy and pushed the "Materials" section
+                too far down. 4:3 sits comfortably next to the copy on
+                desktop and keeps the mobile stack tighter. */}
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-border">
               <Image
-                src="https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=900&q=70"
-                alt="Inside the studio"
+                src="https://res.cloudinary.com/hsr7omb1/image/upload/v1785450929/studio_cbewxu.png"
+                alt="Inside the BagsArt studio"
                 fill
                 sizes="(min-width: 1024px) 520px, 90vw"
                 priority
@@ -128,19 +132,19 @@ export default function AboutPage() {
               title: "Full-grain leather",
               note: "The top layer of the hide, with the grain intact. Heavier and stiffer than the corrected leather most factories use — but it ages well and develops a natural patina.",
               image:
-                "https://images.unsplash.com/photo-1564594985645-4427056e22e2?auto=format&fit=crop&w=600&q=70",
+                "https://res.cloudinary.com/hsr7omb1/image/upload/v1785450290/pic_1_leather_x1bdjj.png",
             },
             {
               title: "Solid brass hardware",
               note: "No plating, no plastic core. The metal is heavier in the hand and will gradually pick up a warmer tone with use rather than chipping.",
               image:
-                "https://images.unsplash.com/photo-1577538926210-fc6a26bf2768?auto=format&fit=crop&w=600&q=70",
+                "https://res.cloudinary.com/hsr7omb1/image/upload/v1785450292/pic_2_brass_lfjp50.png",
             },
             {
               title: "Cotton linings",
               note: "Soft, breathable cotton — not the bonded plastic sheet you'll find inside most mid-range bags. Ages gracefully and doesn't crack.",
               image:
-                "https://images.unsplash.com/photo-1610177498573-58c50bf01ff7?auto=format&fit=crop&w=600&q=70",
+                "https://res.cloudinary.com/hsr7omb1/image/upload/v1785450289/pic_3_cotton_h1qdkf.png",
             },
           ].map((m, i) => (
             <Reveal key={m.title} delay={i * 0.06}>

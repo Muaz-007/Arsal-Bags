@@ -5,29 +5,14 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const COLLAGE = [
-  {
-    src: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=700&q=70",
-    alt: "Atelier Backpack",
-    // big tile on desktop, normal on mobile
-    className: "lg:col-span-2 lg:row-span-2",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?auto=format&fit=crop&w=500&q=70",
-    alt: "Courier Crossbody",
-    className: "lg:col-span-2",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&w=500&q=70",
-    alt: "Soirée Clutch",
-    className: "",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1606513542745-97629752a13b?auto=format&fit=crop&w=500&q=70",
-    alt: "Bifold Wallet",
-    className: "",
-  },
-];
+// The right-hand visual: a single Cloudinary asset that's already a
+// multi-product collage in itself, so we render it full-bleed instead of
+// slicing it into a smaller tile alongside placeholder photos. Swap the
+// URL from Cloudinary to change the artwork — no code change needed.
+const HERO_IMAGE = {
+  src: "https://res.cloudinary.com/hsr7omb1/image/upload/v1785450226/variety_section_ry63gx.png",
+  alt: "A selection of BagsArt leather goods — wallets, clutches, backpacks and totes",
+};
 
 const STATS = [
   { value: "60+", label: "pieces in catalogue" },
@@ -94,28 +79,27 @@ export function VarietyCta() {
             </dl>
           </div>
 
-          {/* Collage — 2x2 grid on mobile, complex 3x2 layout on desktop */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-2 aspect-square lg:aspect-auto lg:h-[440px]">
-            {COLLAGE.map((img, i) => (
-              <motion.div
-                key={img.src}
-                initial={{ opacity: 0, scale: 0.94 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                className={`relative overflow-hidden rounded-2xl border border-border bg-muted ${img.className}`}
-              >
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  sizes="(min-width: 1024px) 22vw, 45vw"
-                  loading="lazy"
-                  className="object-cover transition-transform duration-700 hover:scale-105"
-                />
-              </motion.div>
-            ))}
-          </div>
+          {/* Single hero image — full-bleed on the right. The Cloudinary
+              asset is already a collage of multiple products, so the
+              earlier multi-tile grid was fighting it (partial crops of
+              each product plus placeholder photos alongside). One tile
+              lets the artwork breathe. */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="relative overflow-hidden rounded-2xl border border-border bg-muted aspect-square lg:aspect-auto lg:h-[520px]"
+          >
+            <Image
+              src={HERO_IMAGE.src}
+              alt={HERO_IMAGE.alt}
+              fill
+              sizes="(min-width: 1024px) 45vw, 90vw"
+              loading="lazy"
+              className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+            />
+          </motion.div>
         </div>
       </motion.div>
     </section>

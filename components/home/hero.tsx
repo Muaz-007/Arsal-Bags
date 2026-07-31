@@ -50,7 +50,7 @@ export async function Hero() {
         style={{ backgroundSize: "44px 44px" }}
       />
 
-      <div className="container relative grid lg:grid-cols-2 gap-12 items-center pt-6 pb-24 lg:pt-10 lg:pb-28">
+      <div className="container relative grid gap-12 items-center pt-6 pb-24 lg:pt-10 lg:pb-28 lg:grid-cols-2">
         <Reveal y={16}>
           <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <span className="h-px w-8 bg-gold" />

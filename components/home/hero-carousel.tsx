@@ -24,61 +24,41 @@ export interface Slide {
   tagline: string;
 }
 
+// A single, safely-linked fallback shown when the admin hasn't uploaded
+// any hero slides via `/admin/storefront`. Links to the catalogue root
+// (not a specific product slug) so the CTA can't 404 if the catalogue
+// has been wiped. As soon as the admin adds even one slide, this is
+// ignored and the admin-curated set takes over — one slide = static
+// hero, multiple slides = auto-rotating carousel.
 const DEFAULT_SLIDES: Slide[] = [
   {
-    href: "/products/florence-tote-cognac",
+    href: "/products",
     src: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=70",
-    alt: "Florence Tote in cognac leather",
-    tag: "Featured",
-    name: "Florence Tote",
-    price: "Rs 48,000",
-    tagline: "Precision-crafted in cognac full-grain leather.",
-  },
-  {
-    href: "/products/atelier-backpack-noir",
-    src: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=70",
-    alt: "Atelier Backpack in noir",
-    tag: "New · Studio Daily",
-    name: "Atelier Backpack",
-    price: "Rs 62,000",
-    tagline: "Quietly engineered for the studio commute.",
-  },
-  {
-    href: "/products/milano-shoulder-noir",
-    src: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=70",
-    alt: "Milano Shoulder in noir",
-    tag: "Evening · Limited",
-    name: "Milano Shoulder",
-    price: "Rs 72,000",
-    tagline: "Restrained Italian tailoring in leather.",
-  },
-  {
-    href: "/products/courier-crossbody-tan",
-    src: "https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?auto=format&fit=crop&w=900&q=70",
-    alt: "Courier Crossbody in tan",
-    tag: "Best seller · Crossbody",
-    name: "Courier Crossbody",
-    price: "Rs 34,000",
-    tagline: "Built for the city, finished for the gallery.",
+    alt: "Full-grain leather goods from BagsArt",
+    tag: "The catalogue",
+    name: "Handcrafted in Lahore",
+    price: "",
+    tagline: "Full-grain leather, small batches, quiet design.",
   },
 ];
 
 const ROTATION_MS = 4500;
 
 export function HeroCarousel({ slides }: { slides?: Slide[] }) {
-  // Server may pass admin-curated slides; if absent or empty, fall back to
-  // the in-code defaults so the homepage always has something to show.
+  // Admin slides win; otherwise fall back to the single DEFAULT_SLIDES
+  // entry so the section is never empty. Rotation only kicks in when
+  // there's actually more than one slide to cycle through.
   const SLIDES = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || SLIDES.length <= 1) return;
     const id = setInterval(() => {
       setActive((i) => (i + 1) % SLIDES.length);
     }, ROTATION_MS);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, SLIDES.length]);
 
   const slide = SLIDES[active];
 
@@ -154,41 +134,48 @@ export function HeroCarousel({ slides }: { slides?: Slide[] }) {
         {/* Decorative dot — stays inside the card on mobile */}
         <span className="absolute top-3 left-3 lg:-top-3 lg:-left-3 h-5 w-5 lg:h-6 lg:w-6 rounded-full bg-gold animate-float opacity-90 pointer-events-none" />
 
-        {/* Prev / Next arrows */}
-        <button
-          type="button"
-          onClick={goPrev}
-          aria-label="Previous slide"
-          className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-background/80 backdrop-blur border border-border shadow-md hover:bg-background hover:scale-105 active:scale-95 transition"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          aria-label="Next slide"
-          className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-background/80 backdrop-blur border border-border shadow-md hover:bg-background hover:scale-105 active:scale-95 transition"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+        {/* Prev / Next arrows — hidden with a single slide since there's
+            nothing to navigate to. */}
+        {SLIDES.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label="Previous slide"
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-background/80 backdrop-blur border border-border shadow-md hover:bg-background hover:scale-105 active:scale-95 transition"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Next slide"
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-full bg-background/80 backdrop-blur border border-border shadow-md hover:bg-background hover:scale-105 active:scale-95 transition"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Slide indicators */}
-      <div className="mt-4 flex items-center justify-center gap-1.5">
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            aria-label={`Go to slide ${i + 1}`}
-            onClick={() => setActive(i)}
-            className={cn(
-              "h-1.5 rounded-full transition-all duration-300",
-              i === active
-                ? "w-8 bg-foreground"
-                : "w-1.5 bg-foreground/25 hover:bg-foreground/50"
-            )}
-          />
-        ))}
-      </div>
+      {/* Slide indicators — pointless with one slide, so hide them too. */}
+      {SLIDES.length > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-1.5">
+          {SLIDES.map((_, i) => (
+            <button
+              key={i}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => setActive(i)}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === active
+                  ? "w-8 bg-foreground"
+                  : "w-1.5 bg-foreground/25 hover:bg-foreground/50"
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

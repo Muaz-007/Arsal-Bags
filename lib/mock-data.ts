@@ -477,5 +477,5 @@ export const CATEGORIES = [
   { slug: "crossbody", label: "Crossbody", image: img("photo-1584917865442-de89df76afd3") },
   { slug: "clutch", label: "Clutches", image: img("photo-1566150905458-1bf1fc113f0d") },
   { slug: "duffel", label: "Duffels", image: img("photo-1547949003-9792a18a2601") },
-  { slug: "wallet", label: "Wallets", image: img("photo-1606513542745-97629752a13b") },
+  { slug: "wallet", label: "Wallets", image: img("photo-1627123424574-724758594e93") },
 ];

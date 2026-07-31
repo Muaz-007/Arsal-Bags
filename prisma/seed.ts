@@ -91,25 +91,26 @@ async function main() {
   }
 
   // ── Featured homepage reviews ────────────────────────────────────────
-  // The three mock testimonials become real Review rows tied to the
-  // products they mention, so the homepage keeps its social proof from
-  // day one but every quote is now a moderatable record the admin can
-  // swap out. Marked approved + featured so they surface immediately.
-  const testimonialProductSlugs = [
-    "florence-tote-cognac",
-    "atelier-backpack-noir",
-    "milano-shoulder-noir",
-  ];
-  for (let i = 0; i < TESTIMONIALS.length; i++) {
+  // Turn the three mock testimonials into real Review rows so the
+  // homepage has social proof from day one — moderatable from the admin
+  // once real customer reviews start coming in. We used to hard-code
+  // the target product slugs, which broke the moment the admin wiped
+  // + re-added products with different slugs. Now we grab the first
+  // three products in the DB (oldest first for stability) so this seed
+  // "just works" regardless of what the admin has in stock.
+  const productsForReviews = await prisma.product.findMany({
+    orderBy: { createdAt: "asc" },
+    take: TESTIMONIALS.length,
+    select: { id: true, slug: true },
+  });
+  if (productsForReviews.length === 0) {
+    console.log(
+      "ℹ  No products found — skipping seeded reviews. Add products from /admin, then re-run seed."
+    );
+  }
+  for (let i = 0; i < productsForReviews.length; i++) {
     const t = TESTIMONIALS[i];
-    const productSlug = testimonialProductSlugs[i];
-    if (!productSlug) continue;
-
-    const product = await prisma.product.findUnique({
-      where: { slug: productSlug },
-      select: { id: true },
-    });
-    if (!product) continue;
+    const product = productsForReviews[i];
 
     // Each seeded testimonial gets its own reviewer user (verified so
     // they can technically log in). Email is a synthetic address that
@@ -128,10 +129,11 @@ async function main() {
       select: { id: true },
     });
 
-    // Idempotent: skip if a review already exists for this (user, product)
-    // pair. Prevents re-seed from duplicating the same testimonial.
+    // Idempotent: skip if THIS reviewer already has a review anywhere
+    // (they only ever leave one — prevents a re-run from creating
+    // duplicates against a newly-added second product).
     const existing = await prisma.review.findFirst({
-      where: { userId: user.id, productId: product.id },
+      where: { userId: user.id },
       select: { id: true },
     });
     if (existing) continue;

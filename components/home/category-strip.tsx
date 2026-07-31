@@ -30,19 +30,25 @@ export interface StripItem {
   image: string;
 }
 
+// Fallback strip items used until the admin uploads curated ones via
+// `/admin/storefront`. Price buckets mirror the filter chips on the
+// catalogue page (Under Rs 3k / 5k / 10k) so a customer clicking a
+// bucket here lands on an active filter, not an empty page. Image IDs
+// re-use known-good leather product shots from the mock catalogue —
+// earlier defaults pulled in mismatched Unsplash IDs (earbuds under
+// "Wallets", a portrait under "Under Rs 15k") which read as broken.
 const DEFAULT_ITEMS: StripItem[] = [
-  { label: "Under Rs 15k", href: "/products?price=0-15000", image: img("photo-1606513542745-97629752a13b") },
+  { label: "Under Rs 3k", href: "/products?price=0-3000", image: img("photo-1590874103328-eac38a683ce7") },
   { label: "Best Sellers", href: "/products?sort=popular", image: img("photo-1548036328-c9fa89d128fa") },
-  { label: "Under Rs 30k", href: "/products?price=0-30000", image: img("photo-1566150905458-1bf1fc113f0d") },
+  { label: "Under Rs 5k", href: "/products?price=0-5000", image: img("photo-1566150905458-1bf1fc113f0d") },
   { label: "Backpacks", href: "/products?category=backpack", image: img("photo-1553062407-98eeb64c6a62") },
   { label: "On Sale", href: "/products?sale=1", image: img("photo-1591348278863-a8fb3887e2aa") },
-  { label: "Totes", href: "/products?category=tote", image: img("photo-1590874103328-eac38a683ce7") },
-  { label: "Under Rs 50k", href: "/products?price=0-50000", image: img("photo-1564422170194-896b89110ef8") },
-  { label: "Signature", href: "/products?collection=heritage", image: img("photo-1547949003-9792a18a2601") },
+  { label: "Totes", href: "/products?category=tote", image: img("photo-1591561954557-26941169b49e") },
+  { label: "Formal", href: "/products?collection=formal", image: img("photo-1547949003-9792a18a2601") },
   { label: "Crossbody", href: "/products?category=crossbody", image: img("photo-1584917865442-de89df76afd3") },
   { label: "New In", href: "/products?sort=latest", image: img("photo-1622560480605-d83c853bc5c3") },
-  { label: "Wallets", href: "/products?category=wallet", image: img("photo-1572569511254-d8f925fe2cbb") },
-  { label: "Evening", href: "/products?collection=evening", image: img("photo-1559563458-527698bf5295") },
+  { label: "Wallets", href: "/products?category=wallet", image: img("photo-1627123424574-724758594e93") },
+  { label: "Semi-formal", href: "/products?collection=semi-formal", image: img("photo-1581605405669-fcdf81165afa") },
 ];
 
 // Mouse leaves → resume almost instantly (the user has moved on).
