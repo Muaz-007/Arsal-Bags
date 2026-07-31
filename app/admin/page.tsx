@@ -8,7 +8,6 @@ import {
   Plus,
   ShoppingCart,
   Sparkles,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
@@ -65,24 +64,17 @@ export default async function AdminDashboard() {
         }
       />
 
-      {/* KPI strip */}
+      {/* KPI strip — deltas omitted until we compute real
+          period-over-period changes from historical orders. Showing
+          hardcoded 12.4% / 4.8% / etc. on a Rs 0 dashboard read as
+          fake data. Once there are two full weeks of orders in the
+          DB, wire the deltas back in by comparing `stats.weekly`
+          totals to the previous 7-day window. */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Revenue (7d)"
-          value={formatPrice(stats.revenue)}
-          delta={12.4}
-        />
-        <StatCard
-          label="Orders (7d)"
-          value={String(stats.orders)}
-          delta={4.8}
-        />
-        <StatCard
-          label="Avg. order value"
-          value={formatPrice(avgOrderValue)}
-          delta={1.7}
-        />
-        <StatCard label="Conversion" value={`${stats.conversion}%`} delta={-0.3} />
+        <StatCard label="Revenue (7d)" value={formatPrice(stats.revenue)} />
+        <StatCard label="Orders (7d)" value={String(stats.orders)} />
+        <StatCard label="Avg. order value" value={formatPrice(avgOrderValue)} />
+        <StatCard label="Conversion" value={`${stats.conversion}%`} />
       </div>
 
       {/* Charts row */}
@@ -90,10 +82,6 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Revenue · last 7 days</CardTitle>
-            <Badge variant="success">
-              <TrendingUp className="h-3 w-3 mr-1 inline" />
-              +12.4%
-            </Badge>
           </CardHeader>
           <CardContent>
             <RevenueChart data={stats.weekly} />

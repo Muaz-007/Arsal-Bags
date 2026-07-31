@@ -15,7 +15,9 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx --env-file=.env prisma/seed.ts",
-    "db:wipe-catalog": "tsx --env-file=.env prisma/wipe-catalog.ts"
+    "db:wipe-catalog": "tsx --env-file=.env prisma/wipe-catalog.ts",
+    "db:wipe-users": "tsx --env-file=.env prisma/wipe-users.ts",
+    "db:wipe-all": "tsx --env-file=.env prisma/wipe-all.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
