@@ -51,7 +51,26 @@ export function ProductForm({ initial }: { initial?: Product }) {
     e.preventDefault();
     setLoading(true);
     const form = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(form.entries());
+    const raw = Object.fromEntries(form.entries()) as Record<string, string>;
+
+    // Empty <input>s serialize to "" from FormData, which trips Zod
+    // schemas expecting numbers / positives (compareAt="" coerces to 0
+    // and fails `.positive()`). Convert those to a sentinel null so the
+    // API sees "field is intentionally cleared" instead of a bad number.
+    // Required text fields (name, tagline, description) still validate
+    // server-side so an empty submit is caught properly.
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (value === "" && (key === "compareAt" || key === "collection")) {
+        payload[key] = null;
+      } else if (value === "" && (key === "images" || key === "specifications")) {
+        // These are string-serialized (newline URLs / JSON). Leave empty
+        // string so the API knows the field is explicitly cleared.
+        payload[key] = "";
+      } else {
+        payload[key] = value;
+      }
+    }
 
     const url = isEdit
       ? `/api/admin/products/${initial!.id}`

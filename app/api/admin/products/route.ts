@@ -11,14 +11,24 @@ const SpecificationEntry = z.object({
   value: z.string().min(1).max(200),
 });
 
+// Cleared form inputs serialize to "" and coerce to 0 — pre-map them
+// to null/undefined so compareAt="" doesn't 400 the create.
+const emptyToNull = (v: unknown) => (v === "" ? null : v);
+
 const ProductSchema = z.object({
   name: z.string().min(1),
   tagline: z.string().min(1),
   description: z.string().min(1),
   price: z.coerce.number().positive(),
-  compareAt: z.coerce.number().optional(),
+  compareAt: z.preprocess(
+    emptyToNull,
+    z.coerce.number().positive().nullable().optional()
+  ),
   category: z.string(),
-  collection: z.string().optional(),
+  collection: z.preprocess(
+    (v) => (v === "" ? null : v),
+    z.string().nullable().optional()
+  ),
   stock: z.coerce.number().int().nonnegative(),
   images: z.string(),
   // Optional JSON-encoded array of { label, value } rows. The admin form

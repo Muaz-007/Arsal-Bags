@@ -9,13 +9,22 @@ const SpecificationEntry = z.object({
   value: z.string().min(1).max(200),
 });
 
+// Empty strings from a cleared form input coerce to 0, which fails
+// `z.number().positive()`. Preprocess "" → null for the optional numeric
+// fields so a cleared "Compare-at" saves as "no sale price" instead of
+// 400ing the whole PATCH.
+const emptyToNull = (v: unknown) => (v === "" ? null : v);
+
 const PatchSchema = z
   .object({
     name: z.string().min(1).max(200).optional(),
     tagline: z.string().min(1).max(300).optional(),
     description: z.string().min(1).optional(),
     price: z.coerce.number().positive().optional(),
-    compareAt: z.coerce.number().positive().nullable().optional(),
+    compareAt: z.preprocess(
+      emptyToNull,
+      z.coerce.number().positive().nullable().optional()
+    ),
     category: z.string().optional(),
     collection: z.string().nullable().optional(),
     stock: z.coerce.number().int().nonnegative().optional(),
