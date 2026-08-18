@@ -18,6 +18,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SectionImagePicker } from "@/components/admin/section-image-picker";
+import {
+  SectionLinkPicker,
+  type LinkPickerProduct,
+} from "@/components/admin/section-link-picker";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +49,7 @@ export function SectionEditor({
   allowImage = true,
   allowSubtitle = true,
   allowHref = true,
+  products,
 }: {
   title: string;
   description?: string;
@@ -54,6 +60,9 @@ export function SectionEditor({
   allowImage?: boolean;
   allowSubtitle?: boolean;
   allowHref?: boolean;
+  /** Product list handed down from the server so the link picker can
+   *  offer individual products alongside category / collection presets. */
+  products?: LinkPickerProduct[];
 }) {
   const [items, setItems] = useState(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -312,25 +321,19 @@ export function SectionEditor({
                         )}
                         {allowImage && (
                           <div className="space-y-1.5">
-                            <Label>Image URL</Label>
-                            <Input
+                            <Label>Image</Label>
+                            <SectionImagePicker
                               value={it.image ?? ""}
-                              placeholder="https://..."
-                              onChange={(e) =>
-                                patch(it.id, { image: e.target.value })
-                              }
+                              onChange={(url) => patch(it.id, { image: url })}
                             />
                           </div>
                         )}
                         {allowHref && (
-                          <div className="space-y-1.5">
-                            <Label>Link</Label>
-                            <Input
-                              value={it.href ?? ""}
-                              placeholder="/products?..."
-                              onChange={(e) => patch(it.id, { href: e.target.value })}
-                            />
-                          </div>
+                          <SectionLinkPicker
+                            value={it.href ?? ""}
+                            onChange={(href) => patch(it.id, { href })}
+                            products={products}
+                          />
                         )}
                       </div>
                     </motion.div>

@@ -118,6 +118,12 @@ export default async function StorefrontPage({
           initialItems={HERO_SLIDES}
           itemNoun="slide"
           storeKey="hero"
+          products={allProducts.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            category: p.category,
+          }))}
         />
       )}
 
@@ -128,6 +134,12 @@ export default async function StorefrontPage({
           initialItems={STRIP_ITEMS}
           itemNoun="tile"
           storeKey="strip"
+          products={allProducts.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            category: p.category,
+          }))}
         />
       )}
 
